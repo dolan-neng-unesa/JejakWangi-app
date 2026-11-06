@@ -1,11 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Modul service membaca import.meta.env saat dimuat, jadi dimuat ulang per test setelah env di-stub.
-async function load(path) {
+async function load(path, { api = true } = {}) {
   vi.resetModules();
-  vi.stubEnv("VITE_LARAVEL_API_URL", "http://api.test/api");
-  vi.stubEnv("VITE_FIREBASE_API_KEY", "");
-  vi.stubEnv("VITE_FIREBASE_PROJECT_ID", "");
+  vi.stubEnv("VITE_LARAVEL_API_URL", api ? "http://api.test/api" : "");
   return import(/* @vite-ignore */ path);
 }
 
@@ -181,14 +179,25 @@ describe("authService", () => {
     expect(session.readSession()).toBeNull();
   });
 
-  it("subscribeToAuthChanges melihat login mock/Google walau VITE_LARAVEL_API_URL terisi (bug lama)", async () => {
+  it("tanpa VITE_LARAVEL_API_URL: login memakai sesi mock dan subscribeToAuthChanges melihatnya", async () => {
+    const auth = await load("../services/authService.js", { api: false });
+    const seen = [];
+    const unsubscribe = auth.subscribeToAuthChanges((u) => seen.push(u?.uid ?? null));
+
+    await auth.signInWithEmail("tamu@svarga.app", "rahasia123");
+    expect(seen).toEqual([null, "mock-tamu@svarga.app"]);
+
+    unsubscribe();
+  });
+
+  it("dengan VITE_LARAVEL_API_URL: sesi mock diabaikan, hanya sesi Laravel yang dihitung", async () => {
+    localStorage.setItem("svarga_mock_user", JSON.stringify({ uid: "mock-x" }));
     vi.stubGlobal("fetch", vi.fn(async () => json({}, { status: 500 })));
     const auth = await load("../services/authService.js");
     const seen = [];
     const unsubscribe = auth.subscribeToAuthChanges((u) => seen.push(u?.uid ?? null));
 
-    await auth.signInWithGoogle(); // mode mock (tanpa kredensial Firebase)
-    expect(seen).toEqual([null, "mock-google"]);
+    expect(seen).toEqual([null]);
 
     unsubscribe();
   });
@@ -245,5 +254,40 @@ describe("moodService", () => {
     const summary = await mood.getMoodSummary(1);
     expect(summary.total_entries).toBe(2);
     expect(summary.distribution[5]).toBe(2);
+  });
+});
+
+describe("login sosial", () => {
+  it("fetchAuthProviders membaca penyedia aktif dari backend", async () => {
+    const fetchMock = vi.fn(async () => json({ google: { client_id: "gid.apps.googleusercontent.com" }, facebook: null }));
+    vi.stubGlobal("fetch", fetchMock);
+    const auth = await load("../services/authService.js");
+    const providers = await auth.fetchAuthProviders();
+    expect(fetchMock.mock.calls[0][0]).toBe("http://api.test/api/auth/providers");
+    expect(providers.google.client_id).toBe("gid.apps.googleusercontent.com");
+    expect(providers.facebook).toBeNull();
+  });
+
+  it("fetchAuthProviders tidak melempar saat server mati — tombol sosial saja yang hilang", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("Failed to fetch"); }));
+    const auth = await load("../services/authService.js");
+    await expect(auth.fetchAuthProviders()).resolves.toEqual({ google: null, facebook: null });
+  });
+
+  it("signInWithSocial mengirim provider+token lalu menyimpan sesi", async () => {
+    const fetchMock = vi.fn(async () => json({ user: { id: 9, name: "Sari", email: "s@x.id" }, token: "SOC", expires_at: null }, { status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const auth = await load("../services/authService.js");
+    const user = await auth.signInWithSocial("google", "id-token");
+    expect(fetchMock.mock.calls[0][0]).toBe("http://api.test/api/auth/social");
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ provider: "google", token: "id-token" });
+    expect(user).toMatchObject({ uid: "laravel-9", email: "s@x.id" });
+    expect(auth.getLaravelToken()).toBe("SOC");
+  });
+
+  it("signInWithSocial meneruskan pesan galat server (mis. 409/503)", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => json({ message: "Login Google belum dikonfigurasi di server." }, { status: 503 })));
+    const auth = await load("../services/authService.js");
+    await expect(auth.signInWithSocial("google", "x")).rejects.toThrow(/belum dikonfigurasi/);
   });
 });

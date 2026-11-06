@@ -24,7 +24,7 @@ const menuItems = [
 
 // Konten rekomendasi & kuliner masih statis (belum ada tabel khusus di skema
 // database untuk "rating"/"persentase hijau") — mengikuti mockup UI apa adanya,
-// menyusul nanti begitu tabel pendukungnya ditambahkan di schema.sql.
+// menyusul nanti begitu tabel pendukungnya ditambahkan di migration svarga-backend.
 const greenRoutes = [
   { image: route1, name: "Green Corridor Kemiren", distance: "4.2 km", minutes: "25 min", hijau: "92%", rating: 4.9 },
   { image: route2, name: "Marina Boom Corridor", distance: "6.8 km", minutes: "45 min", hijau: "85%", rating: 4.8 },

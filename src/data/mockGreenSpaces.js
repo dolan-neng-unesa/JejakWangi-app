@@ -1,5 +1,5 @@
 // Data contoh (mock) — merepresentasikan baris tabel `green_space` & `koridor`.
-// Dipakai sementara oleh services/* selagi backend/Firebase asli belum tersambung.
+// Dipakai sementara oleh services/* selagi backend Laravel belum tersambung / tidak terjangkau.
 
 import thumbSritanjung from "../assets/pages/koridor/thumb-sritanjung.png";
 import thumbKalilo from "../assets/pages/koridor/thumb-kalilo.png";

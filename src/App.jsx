@@ -7,7 +7,7 @@ import GeofenceAlert from "./components/geofencing/GeofenceAlert";
 import ErrorBoundary from "./components/global/ErrorBoundary";
 
 // Jalur pertama (splash -> onboarding) dan 404 dimuat langsung; sisanya dipecah per halaman
-// supaya unduhan awal kecil — peta (Leaflet) & Firebase hanya diunduh saat halamannya dibuka.
+// supaya unduhan awal kecil — peta (Leaflet) hanya diunduh saat halamannya dibuka.
 import SplashScreen from "./pages/SplashScreen";
 import OnboardingCarousel from "./pages/OnboardingCarousel";
 import NotFoundPage from "./pages/NotFoundPage";

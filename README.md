@@ -13,9 +13,9 @@ berbasis lokasi (geofencing).
 
 - React 19 + Vite + React Router
 - Tailwind CSS 4
-- Firebase (Firestore) — data lingkungan, koridor, mood, geofencing
-- Laravel API (lihat `../svarga-backend`) — khusus UMKM, Festival (BWI-Fest),
-  dan uji coba sensor suhu/kualitas udara
+- Laravel API (lihat `../svarga-backend`) — satu-satunya backend: auth (Sanctum),
+  koridor/green space, UMKM, Festival (BWI-Fest), sensor, mood, geofencing,
+  soundscape. Database-nya hanya ada di backend (`svarga_be_db`).
 - Leaflet.js + React-Leaflet + OpenStreetMap — peta koridor & rute
 
 ## Menjalankan
@@ -29,33 +29,24 @@ npm run lint      # oxlint
 
 ## Konfigurasi environment (`.env.local`)
 
-```env
-VITE_FIREBASE_API_KEY=...
-VITE_FIREBASE_AUTH_DOMAIN=...
-VITE_FIREBASE_PROJECT_ID=...
-VITE_FIREBASE_STORAGE_BUCKET=...
-VITE_FIREBASE_MESSAGING_SENDER_ID=...
-VITE_FIREBASE_APP_ID=...
+Salin `.env.example` menjadi `.env.local`:
 
-# Backend Laravel — UMKM, Festival, dan uji coba sensor. Kosongkan untuk
-# memakai data mock/Firestore saja.
+```env
+# Alamat API Laravel (svarga-backend). Production: URL API publik, mis.
+# https://api.svarga.id/api — nilai ini tertanam saat `npm run build`.
+# Kosongkan hanya untuk mengembangkan UI tanpa backend (data mock lokal).
 VITE_LARAVEL_API_URL=http://localhost:8000/api
 ```
 
-Semua nilai di atas opsional secara individual: setiap `services/*.js` memilih
-sumber data secara otomatis dan berjenjang, jadi halaman tidak pernah blank
-walau salah satu backend belum aktif:
+Setiap `services/*.js` memilih sumber data berjenjang, jadi halaman tidak pernah
+blank walau backend belum aktif:
 
-1. **Laravel API** (kalau `VITE_LARAVEL_API_URL` diisi dan servernya menyala) —
-   dipakai untuk UMKM, Festival/BWI-Fest, sensor suhu/kualitas udara, Auth,
-   Mood Tracker, Geofencing/Soundscape, **dan koridor/green space**.
-2. **Firestore** (kalau kredensial Firebase diisi) — fallback kalau Laravel
-   tidak dikonfigurasi/gagal. **Catatan:** koleksi `koridor`/`green_space`
-   di project Firebase belum pernah diisi data sungguhan — kalau kredensial
-   Firebase terisi tapi Laravel tidak jalan, gambar koridor tidak akan
-   muncul karena koleksi ini kosong. Isi `VITE_LARAVEL_API_URL` dan jalankan
-   `svarga-backend` untuk menghindari ini.
-3. **Data mock lokal** (`src/data/*.js`) — fallback terakhir.
+1. **Laravel API** (kalau `VITE_LARAVEL_API_URL` diisi dan servernya menyala).
+2. **Data mock lokal** (`src/data/*.js`) — fallback bila Laravel tidak
+   dikonfigurasi atau tidak terjangkau.
+
+Login memakai email/kata sandi lewat Laravel Sanctum. Tanpa
+`VITE_LARAVEL_API_URL`, login memakai sesi mock di `localStorage`.
 
 ## Struktur folder
 
@@ -66,11 +57,10 @@ src/
 │                 SoundscapeTherapy, Geofencing, BwiFest, Umkm, dst.)
 ├── components/   Komponen UI (global/, layout/, geofencing/)
 ├── services/     Satu file per domain data; menjembatani halaman ke
-│                 Laravel API / Firestore / mock (lihat urutan fallback di atas)
+│                 Laravel API / mock (lihat urutan fallback di atas)
 ├── hooks/        useGeofence, useSensorReading
 ├── context/      GeofenceContext (state zona aktif lintas halaman)
-├── data/         Data mock (dipakai selama backend belum tersedia)
-└── db/schema.sql Skema relasional acuan (versi PostgreSQL dari ERD proposal)
+└── data/         Data mock (dipakai selama backend belum tersedia)
 ```
 
 ## Uji coba: konsumsi sensor suhu & kualitas udara (BE Laravel)
@@ -125,10 +115,7 @@ serve`) lalu lihat README-nya untuk cara mengirim data sensor simulasi.
   `svarga-backend/database/seeders/KoridorSeeder.php` (kolom `path`, format
   `[[lat, lng], ...]`) dan `src/data/mockGreenSpaces.js`, lalu
   `php artisan migrate --seed` di backend.
-- **Sumber data**: Laravel → mock. Fallback Firestore untuk koridor/UMKM/festival/
-  geofence/soundscape **dimatikan secara default** (koleksinya kosong dan rules bisa
-  menolak baca, yang memunculkan galat SDK tak tertangkap di konsol). Aktifkan dengan
-  `VITE_USE_FIRESTORE_FALLBACK=true` hanya bila koleksinya sudah terisi.
+- **Sumber data**: Laravel → mock.
 - Galat `ERR_CONNECTION_REFUSED` ke `localhost:8000` di konsol berarti server Laravel
   belum jalan (`php artisan serve` di `svarga-backend`). Itu log jaringan bawaan browser;
   app tetap jalan dengan data mock dan hanya memicunya sekali per muat halaman.
