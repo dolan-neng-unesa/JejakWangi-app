@@ -1,7 +1,6 @@
-import { collection, doc, getDoc, getDocs, orderBy, query } from "firebase/firestore";
 import { USE_MOCK, USE_FIRESTORE_FALLBACK, delay } from "./config";
 import { fetchLaravel, isLaravelAvailable } from "./laravelClient";
-import { db } from "./firebaseClient";
+import { loadFirestore } from "./firebaseClient";
 import { greenSpaces, koridors } from "../data/mockGreenSpaces";
 import { getLatestReading } from "./sensorService";
 import { withTimeout } from "./withTimeout";
@@ -41,6 +40,7 @@ export async function getGreenSpaces() {
   if (api) return api;
 
   const fs = await fromFirestore(async () => {
+    const { db, getDocs, collection, query, orderBy } = await loadFirestore();
     const snap = await getDocs(query(collection(db, "green_space"), orderBy("name")));
     return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
   });
@@ -56,6 +56,7 @@ export async function getKoridorList() {
   if (api) return api;
 
   const fs = await fromFirestore(async () => {
+    const { db, getDocs, collection } = await loadFirestore();
     const snap = await getDocs(collection(db, "koridor"));
     return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
   });
@@ -71,6 +72,7 @@ export async function getKoridorDetail(koridorId) {
   if (api) return api;
 
   const fs = await fromFirestore(async () => {
+    const { db, getDoc, doc } = await loadFirestore();
     const snap = await getDoc(doc(db, "koridor", String(koridorId)));
     if (!snap.exists()) return null;
     const sensor = await getLatestReading(koridorId);

@@ -54,10 +54,15 @@ export default function BwiFestPage() {
   });
 
   useEffect(() => {
+    // Ganti bulan/kategori dengan cepat: respons lama tidak boleh menimpa yang terbaru.
+    let cancelled = false;
     setEvents(null);
     getFestivalsByMonth(toYearMonth(currentMonth), category)
-      .then(setEvents)
-      .catch(() => setEvents([]));
+      .then((list) => !cancelled && setEvents(list))
+      .catch(() => !cancelled && setEvents([]));
+    return () => {
+      cancelled = true;
+    };
   }, [currentMonth, category]);
 
   useEffect(() => {

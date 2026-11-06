@@ -33,7 +33,13 @@ export default function KoridorListPage() {
   const [koridors, setKoridors] = useState(null);
 
   useEffect(() => {
-    getKoridorList().then(setKoridors);
+    let cancelled = false;
+    getKoridorList()
+      .then((list) => !cancelled && setKoridors(list))
+      .catch(() => !cancelled && setKoridors([])); // tanpa catch: kerangka loading tampil selamanya
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -44,6 +50,10 @@ export default function KoridorListPage() {
 
         <div className="flex flex-col gap-4 mt-5">
           {!koridors && Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}
+
+          {koridors?.length === 0 && (
+            <p className="text-sm text-ink-500 text-center py-8">Data koridor belum dapat dimuat. Coba lagi nanti.</p>
+          )}
 
           {koridors?.map((k) => {
             const badge = hijauBadge[k.hijau_level] ?? hijauBadge.agak_hijau;

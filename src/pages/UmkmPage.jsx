@@ -10,7 +10,13 @@ export default function UmkmPage() {
   const [umkm, setUmkm] = useState(null);
 
   useEffect(() => {
-    getUmkmByKoridor(1).then(setUmkm);
+    let cancelled = false;
+    getUmkmByKoridor(1)
+      .then((list) => !cancelled && setUmkm(list))
+      .catch(() => !cancelled && setUmkm([])); // tanpa catch: kerangka loading tampil selamanya
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -20,6 +26,9 @@ export default function UmkmPage() {
       </p>
       <div className="flex flex-col gap-3">
         {!umkm && Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+        {umkm?.length === 0 && (
+          <p className="text-sm text-ink-500 text-center py-8">Belum ada UMKM yang dapat ditampilkan.</p>
+        )}
         {umkm?.map((u) => (
           <Card key={u.id} className="overflow-hidden flex items-stretch gap-3 p-3">
             {u.image ? (

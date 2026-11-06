@@ -11,7 +11,7 @@ import { toLatLng } from "../lib/geo";
 
 export default function GeofencingPage() {
   const navigate = useNavigate();
-  const { zones, watching, startWatching, simulateZone } = useGeofence();
+  const { zones, watching, watchError, startWatching, simulateZone } = useGeofence();
   const mapZones = zones
     .map((z) => ({ zone: z, pos: toLatLng(z.latitude, z.longitude) }))
     .filter((x) => x.pos);
@@ -96,6 +96,11 @@ export default function GeofencingPage() {
         >
           {watching ? "Memantau lokasi Anda di seluruh app…" : "Aktifkan Pemantauan Lokasi Asli"}
         </button>
+        {watchError && (
+          <p role="alert" className="text-xs text-red-600 text-center mt-2">
+            {watchError}
+          </p>
+        )}
         <p className="text-[0.7rem] text-ink-500 text-center mt-2">
           Sekali diaktifkan, notifikasi akan tetap muncul walau berpindah halaman.
           Atau ketuk salah satu zona di atas untuk mensimulasikannya.

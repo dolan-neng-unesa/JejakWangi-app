@@ -6,6 +6,7 @@ import {
   signInWithEmail,
   registerWithEmail,
   signInWithGoogle,
+  MIN_PASSWORD_LENGTH,
 } from "../services/authService";
 
 function SocialButton({ label, onClick, disabled, children }) {
@@ -34,8 +35,24 @@ export default function LoginPage() {
 
   const isRegister = mode === "register";
 
+  /** Validasi sisi klien: pesan langsung tanpa menunggu round-trip ke server. */
+  function validate() {
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return "Masukkan alamat email yang valid.";
+    if (!password) return "Kata sandi wajib diisi.";
+    if (isRegister && password.length < MIN_PASSWORD_LENGTH) {
+      return `Kata sandi minimal ${MIN_PASSWORD_LENGTH} karakter.`;
+    }
+    return "";
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
+    if (loading) return;
+    const problem = validate();
+    if (problem) {
+      setError(problem);
+      return;
+    }
     setError("");
     setLoading(true);
     try {
@@ -77,7 +94,7 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="max-w-md mx-auto w-full mt-8 flex flex-col gap-4">
+      <form onSubmit={handleSubmit} noValidate className="max-w-md mx-auto w-full mt-8 flex flex-col gap-4">
         {isRegister && (
           <div>
             <label htmlFor="name" className="text-sm font-medium text-ink-900">
@@ -98,12 +115,15 @@ export default function LoginPage() {
 
         <div>
           <label htmlFor="identifier" className="text-sm font-medium text-ink-900">
-            Email atau Nomor Telepon
+            Email
           </label>
           <div className="flex items-center gap-2 mt-1.5 bg-white rounded-2xl border border-canopy-800/10 px-3.5 py-3 focus-within:border-canopy-700">
             <input
               id="identifier"
-              type="text"
+              type="email"
+              inputMode="email"
+              autoCapitalize="none"
+              spellCheck={false}
               placeholder="contoh@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -128,12 +148,8 @@ export default function LoginPage() {
               autoComplete={isRegister ? "new-password" : "current-password"}
             />
           </div>
-          {!isRegister && (
-            <div className="text-right mt-1.5">
-              <button type="button" className="text-xs text-canopy-700 font-medium">
-                Lupa kata sandi?
-              </button>
-            </div>
+          {isRegister && (
+            <p className="text-xs text-ink-500 mt-1.5">Minimal {MIN_PASSWORD_LENGTH} karakter.</p>
           )}
         </div>
 

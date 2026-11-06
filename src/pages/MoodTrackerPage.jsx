@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Icon from "../components/global/Icon";
 import BottomNav from "../components/layout/BottomNav";
-import { submitMood } from "../services/moodService";
+import { submitMood, getAnonymousSessionId } from "../services/moodService";
 
 const moods = [
   { score: 1, emoji: "😭", label: "Sangat Buruk" },
@@ -24,20 +24,33 @@ export default function MoodTrackerPage() {
   const [selectedMood, setSelectedMood] = useState(3);
   const [note, setNote] = useState("");
   const [activity, setActivity] = useState("olahraga");
-  const [status, setStatus] = useState("idle"); // idle | saving | saved
+  const [status, setStatus] = useState("idle"); // idle | saving | saved | error
+  const [errorMessage, setErrorMessage] = useState("");
+  const navTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(navTimer.current), []); // jangan navigasi setelah halaman ditinggalkan
 
   async function handleSubmit() {
-    if (!selectedMood) return;
+    if (!selectedMood || status === "saving" || status === "saved") return;
     setStatus("saving");
-    await submitMood({
-      greenSpaceId: 1,
-      moodScore: selectedMood,
-      note: note || undefined,
-      activity,
-      anonymousSessionId: "guest-session",
-    });
+    setErrorMessage("");
+    try {
+      await submitMood({
+        greenSpaceId: 1,
+        moodScore: selectedMood,
+        note: note.trim() || undefined,
+        activity,
+        // ID acak per perangkat (bukan string tetap) supaya tiap tamu dihitung sebagai kontributor berbeda.
+        anonymousSessionId: getAnonymousSessionId(),
+      });
+    } catch (err) {
+      // Tanpa ini, galat menjadi unhandled rejection dan tombol macet di "Menyimpan…" selamanya.
+      setStatus("error");
+      setErrorMessage(err?.friendlyMessage ?? err?.message ?? "Gagal menyimpan mood. Coba lagi.");
+      return;
+    }
     setStatus("saved");
-    setTimeout(() => navigate("/mood/riwayat"), 500);
+    navTimer.current = setTimeout(() => navigate("/mood/riwayat"), 500);
   }
 
   return (
@@ -89,6 +102,7 @@ export default function MoodTrackerPage() {
             <textarea
               id="note"
               rows={3}
+              maxLength={1000}
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Tulis sesuatu tentang perasaanmu..."
@@ -127,11 +141,16 @@ export default function MoodTrackerPage() {
 
         <button
           onClick={handleSubmit}
-          disabled={!selectedMood || status === "saving"}
+          disabled={!selectedMood || status === "saving" || status === "saved"}
           className="w-full mt-4 bg-canopy-700 text-sand-50 rounded-2xl py-3.5 font-medium disabled:opacity-50"
         >
           {status === "saved" ? "Tersimpan 🌿" : status === "saving" ? "Menyimpan…" : "Simpan Mood"}
         </button>
+        {status === "error" && (
+          <p role="alert" className="text-xs text-red-600 text-center mt-2">
+            {errorMessage}
+          </p>
+        )}
       </div>
       <BottomNav />
     </div>
