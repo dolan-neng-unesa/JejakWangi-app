@@ -1,0 +1,103 @@
+rules_version = '2';
+
+// SVARGA — Firestore Security Rules
+//
+// Prinsip:
+//  - Data lingkungan/koridor/konten bersifat PUBLIK untuk dibaca (tanpa login),
+//    sesuai tujuan aplikasi diakses siapa saja lewat QR code (tech equity).
+//  - Hanya admin (custom claim role == "admin") yang boleh menulis data
+//    master (green_space, koridor, sensor_devices, geofences, soundscapes,
+//    umkms, bfest, events).
+//  - sensor_latest & sensor_readings ditulis oleh backend/Cloud Function
+//    tepercaya (service account Admin SDK melewati rules ini sepenuhnya),
+//    BUKAN langsung oleh client — maka create/update dari client diblok.
+//  - mood_logs: siapa saja (termasuk tamu tanpa login) boleh MENULIS satu
+//    entri baru, tapi TIDAK ADA yang boleh membaca dokumen individual —
+//    menjaga anonimitas sesuai Batasan 4.1 proposal. Agregat dihitung lewat
+//    Cloud Function terpisah yang berjalan sebagai Admin SDK (bypass rules)
+//    dan menulis hasilnya ke koleksi mood_aggregates yang boleh dibaca publik.
+
+function isAdmin() {
+  return request.auth != null && request.auth.token.role == "admin";
+}
+
+function isValidMoodLog(data) {
+  return data.keys().hasOnly(["green_space_id", "mood_score", "anonymous_session_id", "logged_at"])
+    && data.mood_score is int
+    && data.mood_score >= 1 && data.mood_score <= 5
+    && data.green_space_id is int;
+}
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Data master: publik baca, hanya admin tulis ---
+    match /green_space/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /koridor/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /geofences/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /soundscapes/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /umkms/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /bfest/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /events/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- Sensor IoT: publik baca snapshot terbaru, tulis hanya via Admin SDK ---
+    match /sensor_devices/{docId} {
+      allow read: if true;
+      allow write: if false; // hanya backend/Cloud Function (Admin SDK, bypass rules)
+    }
+
+    match /sensor_latest/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /sensor_readings/{docId} {
+      allow read: if isAdmin(); // riwayat mentah hanya untuk dashboard admin
+      allow write: if false;
+    }
+
+    // --- Mood Tracker: tulis publik (anonim), TIDAK BISA dibaca ulang ---
+    match /mood_logs/{docId} {
+      allow create: if isValidMoodLog(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
+    // Agregat mood (ditulis oleh Cloud Function via Admin SDK) — boleh dibaca publik
+    match /mood_aggregates/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Default: tolak semua yang tidak eksplisit diizinkan di atas
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

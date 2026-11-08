@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+/* =========================================================
+   SVARGA — Design Tokens
+   Restorative Green-Wellness Corridor · Digital Twin
+   Palette terinspirasi kanopi pohon, tanah Banyuwangi, dan
+   kain batik gajah oling (aksen ochre/gold).
+   ========================================================= */
+@theme {
+  /* Warna utama — disesuaikan dengan mockup UI resmi (SVARGA UI Design) */
+  --color-canopy-950: #16241a;
+  --color-canopy-900: #1e3323;
+  --color-canopy-800: #2c4a30;
+  --color-canopy-700: #3f6e45;   /* hijau utama — splash bg, tombol primary */
+  --color-canopy-600: #4b7750;
+  --color-canopy-500: #5f8f64;
+  --color-canopy-300: #7e9d82;   /* hijau sage — pill sekunder, ikon */
+  --color-canopy-200: #b7c8b9;   /* hijau muda — tombol nonaktif */
+  --color-canopy-100: #dfe8e0;
+
+  --color-sand-50: #faf9f6;      /* krem — bg onboarding/login */
+  --color-sand-100: #f2f5f3;     /* sage sangat muda — bg homepage */
+  --color-sand-200: #e7ece8;
+
+  --color-ochre-600: #b9822c;
+  --color-ochre-500: #d4a039;
+  --color-ochre-100: #f6e8c8;
+
+  --color-ink-900: #1a241b;
+  --color-ink-700: #3a453d;
+  --color-ink-500: #6b7a70;
+
+  --color-alert-600: #b3492d;
+  --color-info-600: #3e6e8e;
+
+  /* Tipografi */
+  --font-display: "Fraunces", "Georgia", serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, monospace;
+
+  /* Radius & bayangan bermotif "kanopi" */
+  --radius-canopy: 1.75rem 1.75rem 1.75rem 0.25rem;
+}
+
+html {
+  font-family: var(--font-body);
+  background-color: var(--color-sand-50);
+  color: var(--color-ink-900);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+}
+
+.font-data {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes svarga-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-in {
+  animation: svarga-sheet-in 0.3s ease-out both;
+}
+
+/* Motif garis kanopi — dipakai sbg divider bersignature di beberapa layout */
+.canopy-divider {
+  height: 10px;
+  background-image: radial-gradient(circle at 10px -4px, transparent 10px, var(--color-canopy-800) 10px.5);
+  background-size: 20px 14px;
+  background-repeat: repeat-x;
+  opacity: 0.15;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ochre-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
