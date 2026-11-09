@@ -6,8 +6,7 @@ import Icon from "../components/global/Icon";
 import BottomNav from "../components/layout/BottomNav";
 import { getUmkmList } from "../services/contentService";
 import BaseTileLayer from "../components/map/BaseTileLayer";
-import { useSnappedRoutes } from "../hooks/useSnappedRoutes";
-import { getRoute, ROUTE_DEST_NAME } from "../lib/demoRoute";
+import { useKoridorRoutes } from "../hooks/useKoridorRoutes";
 import { estimateMinutes, formatDistance, haversineMeters, pointAlong, toLatLng } from "../lib/geo";
 
 const TICKS = 45; // simulasi selesai ±45 detik
@@ -30,8 +29,29 @@ function FollowPosition({ position }) {
 export default function NavigationPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { routes } = useSnappedRoutes();
-  const route = routes[getRoute(id).id];
+  const { loading, routes } = useKoridorRoutes();
+  const route = routes[id];
+
+  if (loading || !route?.hasPath) {
+    return (
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-3 bg-sand-50 px-6 text-center">
+        <p className="text-sm text-ink-500">
+          {loading ? "Memuat rute…" : route ? "Jalur koridor ini belum tersedia." : "Koridor tidak ditemukan."}
+        </p>
+        {!loading && (
+          <button onClick={() => navigate("/route")} className="text-canopy-700 font-medium text-sm underline underline-offset-2">
+            Kembali ke daftar rute
+          </button>
+        )}
+      </div>
+    );
+  }
+  return <NavigationView route={route} />;
+}
+
+function NavigationView({ route }) {
+  const navigate = useNavigate();
+  const ROUTE_DEST_NAME = route.destName;
   const path = route.path;
   const total = route.distanceMeters;
 
@@ -144,7 +164,7 @@ export default function NavigationPage() {
           </button>
         </div>
         <p className="text-[0.7rem] text-ink-500 mt-3">
-          Ini simulasi di jalur contoh, belum memakai GPS. Posisi biru bergerak otomatis di sepanjang rute.
+          Ini simulasi di jalur koridor, belum memakai GPS. Posisi biru bergerak otomatis di sepanjang rute.
         </p>
       </div>
       <BottomNav fixed={false} />

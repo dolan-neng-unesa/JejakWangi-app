@@ -13,9 +13,9 @@ berbasis lokasi (geofencing).
 
 - React 19 + Vite + React Router
 - Tailwind CSS 4
-- Firebase (Firestore) — data lingkungan, koridor, mood, geofencing
-- Laravel API (lihat `../svarga-backend`) — khusus UMKM, Festival (BWI-Fest),
-  dan uji coba sensor suhu/kualitas udara
+- Laravel API (lihat `../svarga-backend`) — satu-satunya backend: auth (Sanctum),
+  koridor/green space, UMKM, Festival (BWI-Fest), sensor, mood, geofencing,
+  soundscape. Database-nya hanya ada di backend (`svarga_be_db`).
 - Leaflet.js + React-Leaflet + OpenStreetMap — peta koridor & rute
 
 ## Menjalankan
@@ -29,33 +29,24 @@ npm run lint      # oxlint
 
 ## Konfigurasi environment (`.env.local`)
 
-```env
-VITE_FIREBASE_API_KEY=...
-VITE_FIREBASE_AUTH_DOMAIN=...
-VITE_FIREBASE_PROJECT_ID=...
-VITE_FIREBASE_STORAGE_BUCKET=...
-VITE_FIREBASE_MESSAGING_SENDER_ID=...
-VITE_FIREBASE_APP_ID=...
+Salin `.env.example` menjadi `.env.local`:
 
-# Backend Laravel — UMKM, Festival, dan uji coba sensor. Kosongkan untuk
-# memakai data mock/Firestore saja.
+```env
+# Alamat API Laravel (svarga-backend). Production: URL API publik, mis.
+# https://api.svarga.id/api — nilai ini tertanam saat `npm run build`.
+# Kosongkan hanya untuk mengembangkan UI tanpa backend (data mock lokal).
 VITE_LARAVEL_API_URL=http://localhost:8000/api
 ```
 
-Semua nilai di atas opsional secara individual: setiap `services/*.js` memilih
-sumber data secara otomatis dan berjenjang, jadi halaman tidak pernah blank
-walau salah satu backend belum aktif:
+Setiap `services/*.js` memilih sumber data berjenjang, jadi halaman tidak pernah
+blank walau backend belum aktif:
 
-1. **Laravel API** (kalau `VITE_LARAVEL_API_URL` diisi dan servernya menyala) —
-   dipakai untuk UMKM, Festival/BWI-Fest, sensor suhu/kualitas udara, Auth,
-   Mood Tracker, Geofencing/Soundscape, **dan koridor/green space**.
-2. **Firestore** (kalau kredensial Firebase diisi) — fallback kalau Laravel
-   tidak dikonfigurasi/gagal. **Catatan:** koleksi `koridor`/`green_space`
-   di project Firebase belum pernah diisi data sungguhan — kalau kredensial
-   Firebase terisi tapi Laravel tidak jalan, gambar koridor tidak akan
-   muncul karena koleksi ini kosong. Isi `VITE_LARAVEL_API_URL` dan jalankan
-   `svarga-backend` untuk menghindari ini.
-3. **Data mock lokal** (`src/data/*.js`) — fallback terakhir.
+1. **Laravel API** (kalau `VITE_LARAVEL_API_URL` diisi dan servernya menyala).
+2. **Data mock lokal** (`src/data/*.js`) — fallback bila Laravel tidak
+   dikonfigurasi atau tidak terjangkau.
+
+Login memakai email/kata sandi lewat Laravel Sanctum. Tanpa
+`VITE_LARAVEL_API_URL`, login memakai sesi mock di `localStorage`.
 
 ## Struktur folder
 
@@ -66,11 +57,10 @@ src/
 │                 SoundscapeTherapy, Geofencing, BwiFest, Umkm, dst.)
 ├── components/   Komponen UI (global/, layout/, geofencing/)
 ├── services/     Satu file per domain data; menjembatani halaman ke
-│                 Laravel API / Firestore / mock (lihat urutan fallback di atas)
+│                 Laravel API / mock (lihat urutan fallback di atas)
 ├── hooks/        useGeofence, useSensorReading
 ├── context/      GeofenceContext (state zona aktif lintas halaman)
-├── data/         Data mock (dipakai selama backend belum tersedia)
-└── db/schema.sql Skema relasional acuan (versi PostgreSQL dari ERD proposal)
+└── data/         Data mock (dipakai selama backend belum tersedia)
 ```
 
 ## Uji coba: konsumsi sensor suhu & kualitas udara (BE Laravel)
@@ -125,10 +115,7 @@ serve`) lalu lihat README-nya untuk cara mengirim data sensor simulasi.
   `svarga-backend/database/seeders/KoridorSeeder.php` (kolom `path`, format
   `[[lat, lng], ...]`) dan `src/data/mockGreenSpaces.js`, lalu
   `php artisan migrate --seed` di backend.
-- **Sumber data**: Laravel → mock. Fallback Firestore untuk koridor/UMKM/festival/
-  geofence/soundscape **dimatikan secara default** (koleksinya kosong dan rules bisa
-  menolak baca, yang memunculkan galat SDK tak tertangkap di konsol). Aktifkan dengan
-  `VITE_USE_FIRESTORE_FALLBACK=true` hanya bila koleksinya sudah terisi.
+- **Sumber data**: Laravel → mock.
 - Galat `ERR_CONNECTION_REFUSED` ke `localhost:8000` di konsol berarti server Laravel
   belum jalan (`php artisan serve` di `svarga-backend`). Itu log jaringan bawaan browser;
   app tetap jalan dengan data mock dan hanya memicunya sekali per muat halaman.
@@ -144,3 +131,29 @@ VITE_MAPTILER_API_KEY=isi_key_dari_maptiler_cloud
 
 Daftar gratis di maptiler.com → Account → API keys. Jangan commit key ke repo publik
 (batasi domain key di dashboard MapTiler). Tanpa key, peta memakai OpenStreetMap standar.
+
+## Alur Jejak Wangi (sesuai dokumen ALUR JEJAK WANGI & Alur Sistem)
+
+| Langkah | Halaman | Catatan |
+|---|---|---|
+| Scan QR titik awal + "naik apa?" | `/scan`, `/q/:koridorId` | Kamera memakai `BarcodeDetector` (Chrome/Android); cadangan: kode manual. Isi QR: `https://…/q/3`, `svarga:koridor:3`, atau `3`. |
+| Beranda | `/home` | Kartu ISPU, Eco-Coach, menu. |
+| Detail koridor | `/koridor/:id` | Oksigen, contoh emisi (motor/mobil/AC toko), kalkulator CO₂, sensor IoT, UMKM. |
+| Smart Green Route | `/route` → `/route/detail/:id` | Cek ISPU dulu; titik hijau (rute), oranye (UMKM), biru (charger surya). |
+| Rekam perjalanan | `/aktivitas` | GPS ala Strava + suara ambient; mode simulasi bila GPS tidak ada. |
+| Scan QR titik akhir | `/scan/akhir/:id` | Verifikasi; boleh dilewati. |
+| Hasil (emisi terhindar & rupiah) | `/aktivitas/selesai/:id` | Peta jejak, peringkat leaderboard, Eco-Coach. |
+| Kupon bertingkat, leaderboard bulanan | `/misi`, `/kupon` | 3 kupon (1/3/5 km) diklaim manual, cooldown 30 hari per kupon. Leaderboard Top 100 jarak terjauh bulan ini; Top 1/3/5/10 mendapat badge di profil. Progres & leaderboard reset otomatis tiap awal bulan (WIB). |
+| Zero-waste: bawa tempat sendiri | `/kasir` (kasir), `/scan/tempat-sendiri` (pelanggan) | Kasir menekan "Customer membawa tempat sendiri" → QR sekali pakai (5 menit). Pelanggan memindai → cooldown tiap kupon yang sedang cooldown berkurang 1 hari. Butuh login + server. |
+| Mood (feedback akhir) | `/mood` | |
+| Charger station surya | `/charger`, `/charger/:id`, `/charger/:id/isi`, `/info` | Progres pengisian masih **simulasi** (belum dibaca dari sensor stasiun). |
+
+**Local-first:** semua data perjalanan disimpan di perangkat (`services/journeyStore.js`). Bila pengguna login dan
+backend terjangkau, `services/journeySync.js` mengirim aktivitas ke `POST /activities`; **server menghitung ulang**
+dampak & poin, memberi kupon resmi, lalu app menarik `/vouchers` dan `/me/summary` sebagai sumber kebenaran.
+
+**Eco-Coach** (`lib/ecoCoach.js`) berbasis aturan (udara, suhu, jam, moda, progres misi) — bukan model bahasa.
+Bentuk input/outputnya sengaja sederhana agar bisa diganti layanan AI nanti.
+
+Asumsi hitung (ubah di `lib/journey.js` DAN `svarga-backend/config/jejakwangi.php`, harus sama):
+BBM Rp10.000/L, 70 kkal/km, 30 poin/km, faktor emisi dari `carbonBalance.js`.

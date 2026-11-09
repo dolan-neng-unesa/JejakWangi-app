@@ -7,7 +7,7 @@ import GeofenceAlert from "./components/geofencing/GeofenceAlert";
 import ErrorBoundary from "./components/global/ErrorBoundary";
 
 // Jalur pertama (splash -> onboarding) dan 404 dimuat langsung; sisanya dipecah per halaman
-// supaya unduhan awal kecil — peta (Leaflet) & Firebase hanya diunduh saat halamannya dibuka.
+// supaya unduhan awal kecil — peta (Leaflet) hanya diunduh saat halamannya dibuka.
 import SplashScreen from "./pages/SplashScreen";
 import OnboardingCarousel from "./pages/OnboardingCarousel";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -27,6 +27,17 @@ const SoundscapeTherapyPage = lazy(() => import("./pages/SoundscapeTherapyPage")
 const GeofencingPage = lazy(() => import("./pages/GeofencingPage"));
 const BwiFestPage = lazy(() => import("./pages/BwiFestPage"));
 const UmkmPage = lazy(() => import("./pages/UmkmPage"));
+const ScanPage = lazy(() => import("./pages/ScanPage"));
+const ActivityPage = lazy(() => import("./pages/ActivityPage"));
+const ActivityResultPage = lazy(() => import("./pages/ActivityResultPage"));
+const ChallengePage = lazy(() => import("./pages/ChallengePage"));
+const CouponPage = lazy(() => import("./pages/CouponPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const ChargerListPage = lazy(() => import("./pages/ChargerListPage"));
+const ChargerDetailPage = lazy(() => import("./pages/ChargerDetailPage"));
+const ChargingPage = lazy(() => import("./pages/ChargingPage"));
+const InfoPage = lazy(() => import("./pages/InfoPage"));
+const KasirPage = lazy(() => import("./pages/KasirPage"));
 
 function PageLoading() {
   return (
@@ -83,6 +94,22 @@ export default function App() {
           <Route path="/geofencing" element={<GeofencingPage />} />
           <Route path="/bfest" element={<BwiFestPage />} />
           <Route path="/umkm" element={<UmkmPage />} />
+
+          {/* Alur Jejak Wangi: scan QR awal (+ moda) -> beranda -> koridor -> rute -> lacak aktivitas -> misi/kupon -> mood */}
+          <Route path="/scan" element={<ScanPage />} />
+          <Route path="/q/:koridorId" element={<ScanPage />} />
+          <Route path="/scan/akhir/:id" element={<ScanPage mode="akhir" />} />
+          <Route path="/scan/tempat-sendiri" element={<ScanPage mode="byo" />} />
+          <Route path="/kasir" element={<KasirPage />} />
+          <Route path="/charger" element={<ChargerListPage />} />
+          <Route path="/charger/:id" element={<ChargerDetailPage />} />
+          <Route path="/charger/:id/isi" element={<ChargingPage />} />
+          <Route path="/info" element={<InfoPage />} />
+          <Route path="/aktivitas" element={<ActivityPage />} />
+          <Route path="/aktivitas/selesai/:id" element={<ActivityResultPage />} />
+          <Route path="/misi" element={<ChallengePage />} />
+          <Route path="/kupon" element={<CouponPage />} />
+          <Route path="/profil" element={<ProfilePage />} />
 
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

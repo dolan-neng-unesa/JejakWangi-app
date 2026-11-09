@@ -7,6 +7,9 @@ import { getKoridorList } from "../services/koridorService";
 import { useSensorSnapshot } from "../hooks/useSensorSnapshot";
 import { useActiveKoridor } from "../hooks/useActiveKoridor";
 import { POLLUTANTS, calcIspu } from "../lib/ispu";
+import { MODA } from "../lib/journey";
+import EcoCoach from "../components/global/EcoCoach";
+import { useJourney } from "../services/journeyStore";
 
 import route1 from "../assets/pages/home/route1.png";
 import route2 from "../assets/pages/home/route2.png";
@@ -24,7 +27,7 @@ const menuItems = [
 
 // Konten rekomendasi & kuliner masih statis (belum ada tabel khusus di skema
 // database untuk "rating"/"persentase hijau") — mengikuti mockup UI apa adanya,
-// menyusul nanti begitu tabel pendukungnya ditambahkan di schema.sql.
+// menyusul nanti begitu tabel pendukungnya ditambahkan di migration svarga-backend.
 const greenRoutes = [
   { image: route1, name: "Green Corridor Kemiren", distance: "4.2 km", minutes: "25 min", hijau: "92%", rating: 4.9 },
   { image: route2, name: "Marina Boom Corridor", distance: "6.8 km", minutes: "45 min", hijau: "85%", rating: 4.8 },
@@ -74,6 +77,7 @@ function EnvStat({ icon, status, value, unit, label }) {
 
 export default function HomePage() {
   const [koridors, setKoridors] = useState([]);
+  const journey = useJourney();
 
   useEffect(() => {
     getKoridorList()
@@ -107,6 +111,11 @@ export default function HomePage() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="font-display font-bold text-xl">Selamat Datang!</h2>
+              {journey.transport && (
+                <p className="text-[0.7rem] mt-1 inline-flex items-center gap-1 bg-white/15 rounded-full px-2 py-0.5">
+                  <Icon name={MODA[journey.transport].icon} size={12} /> Tiba dengan {MODA[journey.transport].label.toLowerCase()}
+                </p>
+              )}
               <p className="text-sm text-sand-100/90 mt-1 max-w-[11rem]">
                 Mari rawat kebugaran di bumi Blambangan
               </p>
@@ -214,6 +223,8 @@ export default function HomePage() {
             );
           })}
         </div>
+
+        <EcoCoach page="home" ispu={ispu} temperature={temperature} transport={journey.transport} className="mt-4" />
 
         <h2 className="font-display font-bold text-lg text-ink-900 mt-6 mb-3">Menu Svarga</h2>
         <div className="grid grid-cols-3 gap-2.5">

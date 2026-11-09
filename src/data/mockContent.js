@@ -58,7 +58,7 @@ export const geofences = [
 
 // business_type dipakai juga sebagai label kategori ("Makanan"/"Minuman Tradisional").
 // distance_m & rating khusus ditampilkan di kartu Rekomendasi UMKM Sekitar (Detail Koridor) —
-// belum ada kolom setara di schema.sql, lihat catatan TODO di README.
+// belum ada kolom setara di tabel umkms backend Laravel (svarga-backend/database/migrations).
 export const umkms = [
   { id: 1, green_space_id: 1, koridor_id: 1, business_name: "Warung Bu Sari", latitude: -8.219, longitude: 114.3702, business_type: "Makanan", address: "Sekitar Taman Sritanjung", distance_m: 120, rating: 4.8, image: umkmWarungBuSari, is_active: true },
   { id: 2, green_space_id: 1, koridor_id: 1, business_name: "Es Dawet Mbak Tini", latitude: -8.2178, longitude: 114.3688, business_type: "Minuman Tradisional", address: "Sekitar Taman Sritanjung", distance_m: 200, rating: 4.6, image: umkmEsDawet, is_active: true },
