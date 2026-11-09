@@ -1,17 +1,36 @@
 import { collection, doc, getDoc, getDocs, orderBy, query } from "firebase/firestore";
-import { USE_MOCK, delay } from "./config";
+import { USE_MOCK, delay, USE_LARAVEL_API, LARAVEL_API_BASE } from "./config";
 import { db } from "./firebaseClient";
 import { greenSpaces, koridors } from "../data/mockGreenSpaces";
 import { getLatestReading } from "./sensorService";
 
 /**
- * Struktur Firestore yang diasumsikan (lihat src/db/schema.sql untuk versi relasional):
- *   green_space/{greenSpaceId}   — sama seperti tabel green_space
- *   koridor/{koridorId}          — sama seperti tabel koridor, doc id = "1", "2", dst.
+ * Green space & koridor. Sebelumnya lewat Firestore, tapi koleksi
+ * `green_space`/`koridor` di project Firebase belum pernah diisi data
+ * sungguhan — inilah kenapa gambar koridor tidak pernah muncul walau data
+ * mock sudah lengkap. Dipindah ke Laravel (lihat KoridorController &
+ * GreenSpaceController) supaya ada satu sumber data nyata yang pasti terisi
+ * (lihat seeder-nya, datanya disamakan persis dengan mock lama, termasuk
+ * gambar — filenya sama, cuma sekarang disajikan Laravel).
+ * Urutan sumber tetap: Laravel -> Firestore -> mock.
  */
+async function fetchLaravel(path) {
+  const res = await fetch(`${LARAVEL_API_BASE}${path}`);
+  if (!res.ok) throw new Error(`Laravel API ${path} merespons ${res.status}`);
+  const json = await res.json();
+  return json.data ?? json;
+}
 
 /** Ambil daftar seluruh green space (Taman Sritanjung, Blambangan, dst). */
 export async function getGreenSpaces() {
+  if (USE_LARAVEL_API) {
+    try {
+      return await fetchLaravel("/green-spaces");
+    } catch (err) {
+      console.warn("Laravel API (green-spaces) tidak terjangkau, jatuh ke fallback:", err.message);
+    }
+  }
+
   if (USE_MOCK) {
     await delay();
     return greenSpaces;
@@ -22,6 +41,14 @@ export async function getGreenSpaces() {
 
 /** Ambil daftar koridor (pilot + rencana perluasan). */
 export async function getKoridorList() {
+  if (USE_LARAVEL_API) {
+    try {
+      return await fetchLaravel("/koridors");
+    } catch (err) {
+      console.warn("Laravel API (koridors) tidak terjangkau, jatuh ke fallback:", err.message);
+    }
+  }
+
   if (USE_MOCK) {
     await delay();
     return koridors;
@@ -32,6 +59,14 @@ export async function getKoridorList() {
 
 /** Ambil detail satu koridor beserta skor lingkungan terbaru. */
 export async function getKoridorDetail(koridorId) {
+  if (USE_LARAVEL_API) {
+    try {
+      return await fetchLaravel(`/koridors/${koridorId}`);
+    } catch (err) {
+      console.warn("Laravel API (koridors/:id) tidak terjangkau, jatuh ke fallback:", err.message);
+    }
+  }
+
   if (USE_MOCK) {
     await delay();
     const koridor = koridors.find((k) => k.id === Number(koridorId));

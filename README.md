@@ -47,11 +47,15 @@ sumber data secara otomatis dan berjenjang, jadi halaman tidak pernah blank
 walau salah satu backend belum aktif:
 
 1. **Laravel API** (kalau `VITE_LARAVEL_API_URL` diisi dan servernya menyala) —
-   dipakai untuk UMKM, Festival/BWI-Fest, dan sensor suhu/kualitas udara.
-2. **Firestore** (kalau kredensial Firebase diisi) — dipakai untuk koridor,
-   green space, mood tracker, geofencing.
-3. **Data mock lokal** (`src/data/*.js`) — fallback terakhir, aktif otomatis
-   kalau kredensial di atas kosong atau request gagal.
+   dipakai untuk UMKM, Festival/BWI-Fest, sensor suhu/kualitas udara, Auth,
+   Mood Tracker, Geofencing/Soundscape, **dan koridor/green space**.
+2. **Firestore** (kalau kredensial Firebase diisi) — fallback kalau Laravel
+   tidak dikonfigurasi/gagal. **Catatan:** koleksi `koridor`/`green_space`
+   di project Firebase belum pernah diisi data sungguhan — kalau kredensial
+   Firebase terisi tapi Laravel tidak jalan, gambar koridor tidak akan
+   muncul karena koleksi ini kosong. Isi `VITE_LARAVEL_API_URL` dan jalankan
+   `svarga-backend` untuk menghindari ini.
+3. **Data mock lokal** (`src/data/*.js`) — fallback terakhir.
 
 ## Struktur folder
 
