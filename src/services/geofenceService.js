@@ -1,10 +1,33 @@
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
-import { USE_MOCK, delay } from "./config";
+import { USE_MOCK, delay, USE_LARAVEL_API, LARAVEL_API_BASE } from "./config";
 import { db } from "./firebaseClient";
 import { geofences, soundscapes } from "../data/mockContent";
 
+/**
+ * Geofencing & Soundscape Therapy — sesuai arahan mentor, backend dipindah
+ * ke Laravel (lihat GeofenceController & SoundscapeController). Urutan
+ * sumber data sama seperti fitur lain: Laravel -> Firestore -> mock.
+ * Pendeteksian zona (Haversine, findActiveZone di bawah) TETAP berjalan
+ * client-side sesuai Batasan 4.1 proposal — hanya daftar zona yang
+ * sumbernya berpindah.
+ */
+async function fetchLaravel(path) {
+  const res = await fetch(`${LARAVEL_API_BASE}${path}`);
+  if (!res.ok) throw new Error(`Laravel API ${path} merespons ${res.status}`);
+  const json = await res.json();
+  return json.data ?? json;
+}
+
 /** Ambil seluruh zona geofencing yang aktif. */
 export async function getActiveGeofences() {
+  if (USE_LARAVEL_API) {
+    try {
+      return await fetchLaravel("/geofences");
+    } catch (err) {
+      console.warn("Laravel API (geofences) tidak terjangkau, jatuh ke fallback:", err.message);
+    }
+  }
+
   if (USE_MOCK) {
     await delay();
     return geofences.filter((g) => g.is_active);
@@ -14,6 +37,14 @@ export async function getActiveGeofences() {
 }
 
 export async function getSoundscape(soundscapeId) {
+  if (USE_LARAVEL_API) {
+    try {
+      return await fetchLaravel(`/soundscapes/${soundscapeId}`);
+    } catch (err) {
+      console.warn("Laravel API (soundscapes) tidak terjangkau, jatuh ke fallback:", err.message);
+    }
+  }
+
   if (USE_MOCK) {
     await delay(150);
     return soundscapes.find((s) => s.id === soundscapeId) ?? null;

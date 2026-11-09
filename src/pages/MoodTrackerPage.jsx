@@ -31,6 +31,8 @@ export default function MoodTrackerPage() {
     await submitMood({
       greenSpaceId: 1,
       moodScore: selectedMood,
+      note: note || undefined,
+      activity,
       anonymousSessionId: "guest-session",
     });
     setStatus("saved");
