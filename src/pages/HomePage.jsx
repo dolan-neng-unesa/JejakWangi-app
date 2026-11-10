@@ -1,10 +1,12 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../components/global/Icon";
-import PollutantCard from "../components/global/PollutantCard";
-import IspuLegend from "../components/global/IspuLegend";
+import Skeleton from "../components/global/Skeleton";
 import BottomNav from "../components/layout/BottomNav";
-import { POLLUTANT_KEYS } from "../lib/ispu";
-import { latestPollutantsByKoridor } from "../data/mockSensorReadings";
+import { getKoridorList } from "../services/koridorService";
+import { useSensorSnapshot } from "../hooks/useSensorSnapshot";
+import { useActiveKoridor } from "../hooks/useActiveKoridor";
+import { POLLUTANTS, calcIspu } from "../lib/ispu";
 
 import route1 from "../assets/pages/home/route1.png";
 import route2 from "../assets/pages/home/route2.png";
@@ -33,10 +35,63 @@ const culinary = [
   { image: food2, name: "Kopi Osing", desc: "Biji kopi lokal Kemiren", price: "Rp 12k", rating: 4.7 },
 ];
 
+// Parameter yang ditampilkan sebagai kartu kecil (sesuai field yang dikirim ESP32).
+const STAT_FIELDS = [
+  { key: "temperature", label: "Suhu", unit: " °C", decimals: 1 },
+  { key: "pm25", label: "PM2.5", unit: " µg/m³", decimals: 1 },
+  { key: "pm10", label: "PM10", unit: " µg/m³", decimals: 0 },
+  { key: "co", label: "CO", unit: " µg/m³", decimals: 0 },
+  { key: "co2", label: "CO2", unit: " ppm", decimals: 0 },
+  { key: "o2", label: "O2", unit: " %", decimals: 1 },
+  { key: "so2", label: "SO2", unit: " µg/m³", decimals: 0 },
+  { key: "o3", label: "O3", unit: " µg/m³", decimals: 0 },
+  { key: "no2", label: "NO2", unit: " µg/m³", decimals: 0 },
+  { key: "air_quality", label: "AQI", unit: "", decimals: 0 },
+];
+
+function formatTime(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+function EnvStat({ icon, status, value, unit, label }) {
+  return (
+    <div className="min-w-[112px] bg-white rounded-2xl border border-canopy-800/10 p-3 shrink-0">
+      <div className="flex items-center justify-between">
+        <span className="h-6 w-6 rounded-full bg-canopy-100 text-canopy-700 flex items-center justify-center">
+          <Icon name={icon} size={13} />
+        </span>
+        <span className="text-[0.6rem] font-medium text-canopy-700 uppercase tracking-wide">{status}</span>
+      </div>
+      <p className="font-data text-lg text-ink-900 mt-2">
+        {value}
+        <span className="text-xs text-ink-500">{unit}</span>
+      </p>
+      <p className="text-xs text-ink-500">{label}</p>
+    </div>
+  );
+}
+
 export default function HomePage() {
-  // Koridor yang ditampilkan di dashboard (diorama koridor 1).
-  const koridorId = 1;
-  const fallback = latestPollutantsByKoridor[koridorId];
+  const [koridors, setKoridors] = useState([]);
+
+  useEffect(() => {
+    getKoridorList()
+      .then(setKoridors)
+      .catch(() => setKoridors([]));
+  }, []);
+
+  // Hanya satu wilayah yang bisa ON di ESP32; kartu ISPU menampilkan wilayah itu saja.
+  const active = useActiveKoridor();
+  const koridorId = active.koridorId;
+  const activeKoridor = koridors.find((k) => Number(k.id) === koridorId);
+  const activeName = activeKoridor?.short_name ?? (koridorId != null ? `Wilayah ${koridorId}` : null);
+
+  const snap = useSensorSnapshot(koridorId);
+  const values = Object.fromEntries(Object.entries(snap.readings).map(([k, r]) => [k, r.value]));
+  const hasData = Object.keys(values).length > 0;
+  const ispu = calcIspu(values);
+  const temperature = values.temperature;
 
   return (
     <div className="min-h-dvh flex flex-col bg-sand-100">
@@ -59,7 +114,7 @@ export default function HomePage() {
             <div className="bg-white/10 rounded-2xl px-3 py-2 flex items-center gap-2 shrink-0">
               <Icon name="weather" size={20} />
               <div className="text-right leading-tight">
-                <p className="font-data text-sm">28°C</p>
+                <p className="font-data text-sm">{temperature != null ? `${temperature.toFixed(1)}°C` : "28°C"}</p>
                 <p className="text-[0.6rem] text-sand-100/80">Banyuwangi</p>
               </div>
             </div>
@@ -84,13 +139,81 @@ export default function HomePage() {
         </section>
 
         <h2 className="font-display font-bold text-lg text-ink-900 mt-6">Kondisi Lingkungan</h2>
-        <p className="text-xs text-ink-500 mt-0.5 mb-3">Indeks Standar Pencemar Udara (ISPU) koridor hijau</p>
+        <p className="text-xs text-ink-500 mt-0.5 mb-3">ISPU &amp; parameter kualitas udara koridor hijau</p>
+
+        {koridorId != null && (
+          <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-canopy-700 text-sand-50 px-3 py-1 text-xs font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-canopy-100" />
+            {activeName} aktif
+          </div>
+        )}
+
+        {koridorId != null && snap.loading && !hasData && <Skeleton className="h-16 mb-3" />}
+
+        {ispu && (
+          <div
+            className="rounded-2xl p-4 mb-3"
+            style={{ backgroundColor: ispu.category.bg, color: ispu.category.fg }}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[0.6rem] uppercase tracking-wide opacity-80">ISPU {activeName}</p>
+                <p className="font-display font-bold text-2xl">{ispu.value}</p>
+              </div>
+              <div className="text-right">
+                <p className="font-semibold text-sm">{ispu.category.label}</p>
+                <p className="text-[0.65rem] opacity-80">
+                  Dominan: {POLLUTANTS[ispu.dominant].sym}
+                  {POLLUTANTS[ispu.dominant].sub}
+                </p>
+              </div>
+            </div>
+            <p className="text-[0.6rem] opacity-80 mt-2">
+              {snap.isStale ? "Data lama • " : "Live • "}
+              diperbarui {formatTime(snap.updatedAt)}
+            </p>
+          </div>
+        )}
+
+        {koridorId == null && (
+          <div className="rounded-2xl p-4 mb-3 bg-white border border-canopy-800/10 text-sm text-ink-500">
+            {active.loading
+              ? "Memeriksa wilayah aktif..."
+              : active.error
+                ? "Tidak dapat menghubungi server sensor."
+                : "Tidak ada wilayah yang aktif. Nyalakan salah satu wilayah di perangkat ESP32."}
+          </div>
+        )}
+
+        {koridorId != null && !snap.loading && !ispu && (
+          <div className="rounded-2xl p-4 mb-3 bg-white border border-canopy-800/10 text-sm text-ink-500">
+            {snap.error
+              ? "Tidak dapat menghubungi server sensor."
+              : hasData
+                ? "Belum ada data polutan untuk menghitung ISPU."
+                : "Menunggu data dari sensor ESP32..."}
+          </div>
+        )}
+
         <div className="flex gap-2.5 overflow-x-auto -mx-4 px-4 pb-1 no-scrollbar">
-          {POLLUTANT_KEYS.map((key) => (
-            <PollutantCard key={key} pollutant={key} koridorId={koridorId} fallbackValue={fallback[key]} />
-          ))}
+          {snap.loading && !hasData && Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 min-w-[112px] shrink-0" />)}
+          {STAT_FIELDS.filter((f) => values[f.key] != null).map((f) => {
+            const sub = ispu?.subs.find((x) => x.key === f.key);
+            return (
+              <EnvStat
+                key={f.key}
+                icon="weather"
+                status={sub ? `Sub ${sub.sub}` : "-"}
+                value={Number(values[f.key]).toLocaleString("id-ID", {
+                  minimumFractionDigits: f.decimals,
+                  maximumFractionDigits: f.decimals,
+                })}
+                unit={f.unit}
+                label={f.label}
+              />
+            );
+          })}
         </div>
-        <IspuLegend />
 
         <h2 className="font-display font-bold text-lg text-ink-900 mt-6 mb-3">Menu Svarga</h2>
         <div className="grid grid-cols-3 gap-2.5">

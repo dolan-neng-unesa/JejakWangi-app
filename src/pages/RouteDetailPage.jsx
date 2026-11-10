@@ -1,50 +1,13 @@
-import { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MapContainer, TileLayer, Polyline, CircleMarker } from "react-leaflet";
+import { MapContainer, Polyline, CircleMarker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import Icon from "../components/global/Icon";
 import BottomNav from "../components/layout/BottomNav";
-import { MAP_TILE_URL, MAP_TILE_ATTRIBUTION } from "../lib/mapTiles";
-
-const routePath = [
-  [-8.2194, 114.3697],
-  [-8.219, 114.3691],
-  [-8.2182, 114.3685],
-  [-8.2178, 114.368],
-  [-8.2175, 114.3675],
-];
-
-// Data detail per alternatif rute — hasil pilihan di halaman Smart Green Route
-// (belum ada tabel khusus di schema.sql, sama seperti "Rekomendasi Route Hijau" di Home).
-const routeDetails = {
-  tercepat: {
-    title: "Rute Tercepat",
-    minutes: 28,
-    km: "6.5 km",
-    airQuality: "Sedang",
-    airQualityTone: "text-ochre-600",
-    trend: [22, 28, 34, 30, 26, 24],
-    features: ["Jalur terpendek ke tujuan", "Melewati jalan utama", "Sedikit area teduh", "Berpotensi ramai kendaraan"],
-  },
-  terhijau: {
-    title: "Rute Terhijau",
-    minutes: 32,
-    km: "6.8 km",
-    airQuality: "Baik",
-    airQualityTone: "text-canopy-700",
-    trend: [18, 14, 16, 15, 13, 14],
-    features: ["Kualitas udara sangat baik", "Banyak pepohonan pelindung", "Tingkat kebisingan rendah", "Lebih banyak area teduh"],
-  },
-  teduh: {
-    title: "Rute Paling Teduh",
-    minutes: 30,
-    km: "6.7 km",
-    airQuality: "Baik",
-    airQualityTone: "text-canopy-700",
-    trend: [20, 16, 15, 17, 16, 15],
-    features: ["Cakupan kanopi pohon tertinggi", "Terlindung dari sinar matahari", "Nyaman untuk siang hari", "Sedikit lebih jauh dari tercepat"],
-  },
-};
+import BaseTileLayer from "../components/map/BaseTileLayer";
+import FitBounds from "../components/map/FitBounds";
+import { useSnappedRoutes } from "../hooks/useSnappedRoutes";
+import { getRoute } from "../lib/demoRoute";
+import { formatDistance } from "../lib/geo";
 
 function QualityTrendChart({ points }) {
   const width = 320;
@@ -72,15 +35,17 @@ function QualityTrendChart({ points }) {
 export default function RouteDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const route = routeDetails[id] ?? routeDetails.terhijau;
-
-  const center = useMemo(() => routePath[Math.floor(routePath.length / 2)], []);
+  const { routes } = useSnappedRoutes();
+  const route = routes[getRoute(id).id];
+  const routePath = route.path;
+  const center = routePath[Math.floor(routePath.length / 2)];
 
   return (
     <div className="min-h-dvh flex flex-col bg-sand-50">
       <div className="relative h-52 shrink-0">
         <MapContainer center={center} zoom={16} zoomControl={false} dragging={false} scrollWheelZoom={false} className="h-full w-full">
-          <TileLayer attribution={MAP_TILE_ATTRIBUTION} url={MAP_TILE_URL} />
+          <FitBounds points={routePath} padding={[24, 24]} />
+          <BaseTileLayer />
           <Polyline positions={routePath} pathOptions={{ color: "#3f6e45", weight: 6, opacity: 0.9 }} />
           <CircleMarker center={routePath[0]} radius={6} pathOptions={{ color: "#3f6e45", fillColor: "#fff", fillOpacity: 1, weight: 3 }} />
           <CircleMarker center={routePath[routePath.length - 1]} radius={6} pathOptions={{ color: "#3f6e45", fillColor: "#3f6e45", fillOpacity: 1, weight: 3 }} />
@@ -104,7 +69,7 @@ export default function RouteDetailPage() {
             <p className="text-[0.65rem] text-ink-500 mt-0.5">Waktu Tempuh</p>
           </div>
           <div className="bg-sand-100 rounded-2xl p-3 text-center">
-            <p className="font-display font-bold text-lg text-ink-900">{route.km}</p>
+            <p className="font-display font-bold text-lg text-ink-900">{formatDistance(route.distanceMeters)}</p>
             <p className="text-[0.65rem] text-ink-500 mt-0.5">Jarak</p>
           </div>
           <div className="bg-canopy-100 rounded-2xl p-3 text-center">
@@ -117,9 +82,9 @@ export default function RouteDetailPage() {
         <div className="bg-sand-100 rounded-2xl p-4">
           <QualityTrendChart points={route.trend} />
           <div className="flex justify-between text-[0.65rem] text-ink-500 mt-1">
-            <span>0 km</span>
-            <span>{(parseFloat(route.km) / 2).toFixed(1)} km</span>
-            <span>{route.km}</span>
+            <span>0 m</span>
+            <span>{formatDistance(route.distanceMeters / 2)}</span>
+            <span>{formatDistance(route.distanceMeters)}</span>
           </div>
         </div>
 
@@ -135,8 +100,12 @@ export default function RouteDetailPage() {
           ))}
         </ul>
 
+        <p className="text-[0.7rem] text-ink-500 mt-4">
+          Jalur contoh antara Taman Sritanjung dan Taman Blambangan; data rute nyata belum tersedia.
+        </p>
+
         <button
-          onClick={() => navigate(`/route/detail/${id}/navigasi`)}
+          onClick={() => navigate(`/route/detail/${route.id}/navigasi`)}
           className="w-full mt-6 bg-canopy-700 text-sand-50 rounded-2xl py-3.5 font-medium"
         >
           Mulai Navigasi

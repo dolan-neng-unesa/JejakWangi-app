@@ -108,3 +108,27 @@ serve`) lalu lihat README-nya untuk cara mengirim data sensor simulasi.
 - Geofencing memakai Geolocation API + rumus Haversine di sisi client
   (`src/hooks/useGeofence.js`), hanya aktif selama halaman PWA berada di
   foreground — lihat batasan yang sama di proposal proyek.
+
+## Peta & jalur koridor
+
+- **Tile peta**: semua halaman memakai `components/map/BaseTileLayer.jsx`. Urutan
+  penyedia ada di `src/lib/mapTiles.js` (CARTO → OpenStreetMap; atau penyedia sendiri
+  lewat `VITE_MAP_TILE_URL`). Kalau tile gagal dimuat, otomatis pindah ke penyedia
+  berikutnya; ukuran peta juga disegarkan otomatis saat kontainer berubah.
+- **Jalur mengikuti jalan**: titik-titik jalur (`path` di data koridor, atau titik
+  singgah di `lib/demoRoute.js`) dicocokkan ke jalan nyata OSM oleh `lib/roadSnap.js`
+  (layanan routing pejalan kaki `routing.openstreetmap.de`, atau `VITE_ROUTING_URL`
+  sendiri). Hasilnya di-cache di `localStorage`; kalau layanan tidak terjangkau, garis
+  jatuh ke titik apa adanya dan ditandai "jalur perkiraan".
+- **Menggambar jalur koridor**: buka `/map?edit=1`, pilih koridor, lalu ketuk peta di
+  sepanjang jalannya (awal → akhir). Tekan **Salin JSON** dan tempel ke
+  `svarga-backend/database/seeders/KoridorSeeder.php` (kolom `path`, format
+  `[[lat, lng], ...]`) dan `src/data/mockGreenSpaces.js`, lalu
+  `php artisan migrate --seed` di backend.
+- **Sumber data**: Laravel → mock. Fallback Firestore untuk koridor/UMKM/festival/
+  geofence/soundscape **dimatikan secara default** (koleksinya kosong dan rules bisa
+  menolak baca, yang memunculkan galat SDK tak tertangkap di konsol). Aktifkan dengan
+  `VITE_USE_FIRESTORE_FALLBACK=true` hanya bila koleksinya sudah terisi.
+- Galat `ERR_CONNECTION_REFUSED` ke `localhost:8000` di konsol berarti server Laravel
+  belum jalan (`php artisan serve` di `svarga-backend`). Itu log jaringan bawaan browser;
+  app tetap jalan dengan data mock dan hanya memicunya sekali per muat halaman.

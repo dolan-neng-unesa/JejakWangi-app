@@ -1,5 +1,7 @@
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
-import { USE_MOCK, delay, USE_LARAVEL_API, LARAVEL_API_BASE } from "./config";
+import { USE_MOCK, USE_FIRESTORE_FALLBACK, delay } from "./config";
+import { fetchLaravel, isLaravelAvailable } from "./laravelClient";
+import { withTimeout } from "./withTimeout";
 import { db } from "./firebaseClient";
 import { umkms, bfestEvents } from "../data/mockContent";
 
@@ -14,19 +16,47 @@ import { umkms, bfestEvents } from "../data/mockContent";
  * kalau backend Laravel sedang tidak aktif.
  */
 
-async function fetchLaravel(path) {
-  const res = await fetch(`${LARAVEL_API_BASE}${path}`);
-  if (!res.ok) throw new Error(`Laravel API ${path} merespons ${res.status}`);
-  const json = await res.json();
-  return json.data ?? json; // Laravel API Resource collection membungkus dalam { data: [...] }
+// Firestore bisa menolak baca (rules) atau gagal jaringan — jatuhkan ke mock
+// alih-alih membiarkan promise ditolak (galat tak tertangkap di konsol).
+async function safeFirestore(read, fallback) {
+  if (!USE_FIRESTORE_FALLBACK) {
+    await delay();
+    return fallback();
+  }
+  try {
+    return await withTimeout(read());
+  } catch {
+    await delay();
+    return fallback();
+  }
+}
+
+/** Seluruh UMKM aktif (dipakai peta untuk menampilkan marker; field latitude/longitude bisa null). */
+export async function getUmkmList() {
+  if (isLaravelAvailable()) {
+    try {
+      return await fetchLaravel("/umkm?per_page=100");
+    } catch {
+      // laravelClient sudah mencatat sekali; lanjut ke fallback.
+    }
+  }
+
+  if (USE_MOCK) {
+    await delay();
+    return umkms.filter((u) => u.is_active);
+  }
+  return safeFirestore(async () => {
+    const snap = await getDocs(collection(db, "umkms"));
+    return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
+  }, () => umkms.filter((u) => u.is_active));
 }
 
 export async function getUmkmByKoridor(koridorId) {
-  if (USE_LARAVEL_API) {
+  if (isLaravelAvailable()) {
     try {
       return await fetchLaravel(`/umkm?koridor_id=${koridorId}`);
-    } catch (err) {
-      console.warn("Laravel API (umkm) tidak terjangkau, jatuh ke fallback:", err.message);
+    } catch {
+      // laravelClient sudah mencatat sekali; lanjut ke fallback.
     }
   }
 
@@ -34,16 +64,18 @@ export async function getUmkmByKoridor(koridorId) {
     await delay();
     return umkms.filter((u) => u.koridor_id === Number(koridorId));
   }
-  const snap = await getDocs(query(collection(db, "umkms"), where("koridor_id", "==", Number(koridorId))));
-  return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
+  return safeFirestore(async () => {
+    const snap = await getDocs(query(collection(db, "umkms"), where("koridor_id", "==", Number(koridorId))));
+    return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
+  }, () => umkms.filter((u) => u.koridor_id === Number(koridorId)));
 }
 
 export async function getBfestCalendar() {
-  if (USE_LARAVEL_API) {
+  if (isLaravelAvailable()) {
     try {
       return await fetchLaravel("/festivals?upcoming=1");
-    } catch (err) {
-      console.warn("Laravel API (festivals) tidak terjangkau, jatuh ke fallback:", err.message);
+    } catch {
+      // laravelClient sudah mencatat sekali; lanjut ke fallback.
     }
   }
 
@@ -51,8 +83,10 @@ export async function getBfestCalendar() {
     await delay();
     return bfestEvents;
   }
-  const snap = await getDocs(query(collection(db, "bfest"), orderBy("date")));
-  return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
+  return safeFirestore(async () => {
+    const snap = await getDocs(query(collection(db, "bfest"), orderBy("date")));
+    return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
+  }, () => bfestEvents);
 }
 
 /**
@@ -65,11 +99,11 @@ export async function getFestivalsByMonth(yearMonth, category) {
   const params = new URLSearchParams({ month: yearMonth, per_page: "100" });
   if (category) params.set("category", category);
 
-  if (USE_LARAVEL_API) {
+  if (isLaravelAvailable()) {
     try {
       return await fetchLaravel(`/festivals?${params.toString()}`);
-    } catch (err) {
-      console.warn("Laravel API (festivals) tidak terjangkau, jatuh ke fallback:", err.message);
+    } catch {
+      // laravelClient sudah mencatat sekali; lanjut ke fallback.
     }
   }
 
@@ -78,8 +112,12 @@ export async function getFestivalsByMonth(yearMonth, category) {
     return bfestEvents.filter((e) => e.date.startsWith(yearMonth) && (!category || e.category === category));
   }
 
-  const snap = await getDocs(query(collection(db, "bfest"), orderBy("date")));
-  return snap.docs
-    .map((d) => ({ id: Number(d.id), ...d.data() }))
-    .filter((e) => e.date?.startsWith(yearMonth) && (!category || e.category === category));
+  const inMonth = (e) => e.date?.startsWith(yearMonth) && (!category || e.category === category);
+  return safeFirestore(
+    async () => {
+      const snap = await getDocs(query(collection(db, "bfest"), orderBy("date")));
+      return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() })).filter(inMonth);
+    },
+    () => bfestEvents.filter(inMonth)
+  );
 }

@@ -1,5 +1,7 @@
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
-import { USE_MOCK, delay, USE_LARAVEL_API, LARAVEL_API_BASE } from "./config";
+import { USE_MOCK, USE_FIRESTORE_FALLBACK, delay } from "./config";
+import { fetchLaravel, isLaravelAvailable } from "./laravelClient";
+import { withTimeout } from "./withTimeout";
 import { db } from "./firebaseClient";
 import { geofences, soundscapes } from "../data/mockContent";
 
@@ -11,46 +13,47 @@ import { geofences, soundscapes } from "../data/mockContent";
  * client-side sesuai Batasan 4.1 proposal — hanya daftar zona yang
  * sumbernya berpindah.
  */
-async function fetchLaravel(path) {
-  const res = await fetch(`${LARAVEL_API_BASE}${path}`);
-  if (!res.ok) throw new Error(`Laravel API ${path} merespons ${res.status}`);
-  const json = await res.json();
-  return json.data ?? json;
-}
-
 /** Ambil seluruh zona geofencing yang aktif. */
 export async function getActiveGeofences() {
-  if (USE_LARAVEL_API) {
+  if (isLaravelAvailable()) {
     try {
       return await fetchLaravel("/geofences");
-    } catch (err) {
-      console.warn("Laravel API (geofences) tidak terjangkau, jatuh ke fallback:", err.message);
+    } catch {
+      // laravelClient sudah mencatat sekali; lanjut ke fallback.
     }
   }
 
-  if (USE_MOCK) {
+  if (USE_MOCK || !USE_FIRESTORE_FALLBACK) {
     await delay();
     return geofences.filter((g) => g.is_active);
   }
-  const snap = await getDocs(query(collection(db, "geofences"), where("is_active", "==", true)));
-  return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
+  try {
+    const snap = await withTimeout(getDocs(query(collection(db, "geofences"), where("is_active", "==", true))));
+    return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
+  } catch {
+    return geofences.filter((g) => g.is_active); // rules Firestore menolak / jaringan gagal
+  }
 }
 
 export async function getSoundscape(soundscapeId) {
-  if (USE_LARAVEL_API) {
+  if (isLaravelAvailable()) {
     try {
       return await fetchLaravel(`/soundscapes/${soundscapeId}`);
-    } catch (err) {
-      console.warn("Laravel API (soundscapes) tidak terjangkau, jatuh ke fallback:", err.message);
+    } catch {
+      // laravelClient sudah mencatat sekali; lanjut ke fallback.
     }
   }
 
-  if (USE_MOCK) {
+  if (USE_MOCK || !USE_FIRESTORE_FALLBACK) {
     await delay(150);
     return soundscapes.find((s) => s.id === soundscapeId) ?? null;
   }
-  const snap = await getDoc(doc(db, "soundscapes", String(soundscapeId)));
-  return snap.exists() ? { id: Number(snap.id), ...snap.data() } : null;
+  try {
+    const snap = await withTimeout(getDoc(doc(db, "soundscapes", String(soundscapeId))));
+    return snap.exists() ? { id: Number(snap.id), ...snap.data() } : null;
+  } catch {
+    return soundscapes.find((s) => s.id === soundscapeId) ?? null;
+  }
 }
 
 /**

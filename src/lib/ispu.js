@@ -18,6 +18,7 @@ const INDEX_BOUNDS = [0, 50, 100, 200, 300, 500];
 // Semua dalam µg/m³ (CO juga µg/m³, bukan ppm — kalau sensor memberi ppm,
 // konversi dulu sebelum dikirim ke API).
 export const POLLUTANTS = {
+  pm25: { sym: "PM", sub: "2.5", name: "Partikulat PM2.5", unit: "µg/m³", bp: [15.5, 55.4, 150.4, 250.4, 500] },
   pm10: { sym: "PM", sub: "10", name: "Partikulat PM10", unit: "µg/m³", bp: [50, 150, 350, 420, 500] },
   so2: { sym: "SO", sub: "2", name: "Sulfur dioksida", unit: "µg/m³", bp: [52, 180, 400, 800, 1200] },
   co: { sym: "CO", sub: "", name: "Karbon monoksida", unit: "µg/m³", bp: [4000, 8000, 15000, 30000, 45000] },
@@ -51,4 +52,15 @@ export function toIspuIndex(pollutantKey, concentration) {
 export function ispuCategory(index) {
   if (index == null) return null;
   return ISPU_CATEGORIES.find((c) => index <= c.max) ?? ISPU_CATEGORIES[ISPU_CATEGORIES.length - 1];
+}
+
+/**
+ * ISPU gabungan dari bacaan sensor ({ pm25, pm10, so2, co, o3, no2 } dalam µg/m³).
+ * Nilai ISPU = sub-indeks tertinggi (parameter dominan). null kalau tak ada polutan.
+ */
+export function calcIspu(values) {
+  const subs = POLLUTANT_KEYS.map((key) => ({ key, sub: toIspuIndex(key, values?.[key]) })).filter((s) => s.sub != null);
+  if (!subs.length) return null;
+  const dominant = subs.reduce((a, b) => (b.sub > a.sub ? b : a));
+  return { value: dominant.sub, dominant: dominant.key, category: ispuCategory(dominant.sub), subs };
 }

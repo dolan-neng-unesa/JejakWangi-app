@@ -1,11 +1,20 @@
 import { useNavigate } from "react-router-dom";
+import { MapContainer, Circle, CircleMarker, Tooltip } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 import Icon from "../components/global/Icon";
 import BottomNav from "../components/layout/BottomNav";
+import FitBounds from "../components/map/FitBounds";
 import { useGeofence } from "../hooks/useGeofence";
+import BaseTileLayer from "../components/map/BaseTileLayer";
+import { MAP_CENTER } from "../lib/mapTiles";
+import { toLatLng } from "../lib/geo";
 
 export default function GeofencingPage() {
   const navigate = useNavigate();
   const { zones, watching, startWatching, simulateZone } = useGeofence();
+  const mapZones = zones
+    .map((z) => ({ zone: z, pos: toLatLng(z.latitude, z.longitude) }))
+    .filter((x) => x.pos);
 
   return (
     <div className="min-h-dvh flex flex-col bg-sand-50">
@@ -19,6 +28,29 @@ export default function GeofencingPage() {
             <Icon name="chevronLeft" size={19} className="text-ink-900" />
           </button>
           <h1 className="font-display font-bold text-lg text-ink-900">Geofencing</h1>
+        </div>
+
+        <div className="rounded-2xl overflow-hidden border border-canopy-800/10 h-52 mt-4">
+          <MapContainer center={MAP_CENTER} zoom={15} scrollWheelZoom={false} className="h-full w-full">
+            <BaseTileLayer />
+            <FitBounds points={mapZones.map((x) => x.pos)} maxZoom={16} />
+            {mapZones.map(({ zone, pos }) => (
+              <Circle
+                key={zone.id}
+                center={pos}
+                radius={zone.radius_meter ?? 60}
+                pathOptions={{ color: "#3f6e45", fillColor: "#3f6e45", fillOpacity: 0.2, weight: 2 }}
+                eventHandlers={{ click: () => simulateZone(zone) }}
+              >
+                <Tooltip direction="top">
+                  {zone.name} · radius {zone.radius_meter ?? 60} m
+                </Tooltip>
+              </Circle>
+            ))}
+            {mapZones.map(({ zone, pos }) => (
+              <CircleMarker key={`dot-${zone.id}`} center={pos} radius={4} pathOptions={{ color: "#3f6e45", fillColor: "#3f6e45", fillOpacity: 1 }} />
+            ))}
+          </MapContainer>
         </div>
 
         <h2 className="font-semibold text-ink-900 mt-5">Zona Aktifmu</h2>

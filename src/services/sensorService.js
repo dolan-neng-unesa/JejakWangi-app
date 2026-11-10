@@ -69,3 +69,30 @@ export async function getLastSensorReadingFromDb(sensorType, koridorId) {
   if (!USE_LARAVEL_API) return null;
   return fetchSensorEndpoint("/sensors/latest", sensorType, koridorId);
 }
+
+/**
+ * Snapshot semua jenis sensor satu koridor dalam satu request (ESP32 -> Laravel -> FE).
+ * Balasan: { koridor_id, updated_at, is_stale, readings: { pm25: { value, unit, recorded_at, is_stale }, ... } }
+ * null kalau backend Laravel tidak dikonfigurasi.
+ */
+export async function getSensorSnapshot(koridorId) {
+  if (!USE_LARAVEL_API) return null;
+  const params = new URLSearchParams();
+  if (koridorId != null) params.set("koridor_id", String(koridorId));
+  const res = await fetch(`${LARAVEL_API_BASE}/sensors/snapshot?${params.toString()}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!res.ok) throw new Error(`Sensor snapshot merespons ${res.status}`);
+  return res.json();
+}
+
+/**
+ * Wilayah (koridor) yang sedang ON di perangkat ESP32 — hanya satu wilayah yang bisa aktif.
+ * Balasan: { koridor_id: "2" | null, updated_at, is_stale }. null kalau backend Laravel tidak dikonfigurasi.
+ */
+export async function getActiveKoridor() {
+  if (!USE_LARAVEL_API) return null;
+  const res = await fetch(`${LARAVEL_API_BASE}/sensors/active`, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`Sensor active merespons ${res.status}`);
+  return res.json();
+}
