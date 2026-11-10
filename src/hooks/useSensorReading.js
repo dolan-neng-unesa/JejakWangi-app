@@ -19,7 +19,8 @@ import { getLiveSensorReading, getLastSensorReadingFromDb } from "../services/se
  *   4. Begitu /live kembali memberi data segar, sumber otomatis balik ke
  *      'live' lagi tanpa perlu reload halaman.
  *
- * Dipakai untuk 2 jenis sensor uji coba: 'temperature' dan 'air_quality'.
+ * Dipakai untuk 'temperature', 'air_quality', dan polutan ISPU: 'pm10',
+ * 'so2', 'co', 'o3', 'no2' (lihat src/lib/ispu.js).
  * Kalau backend Laravel belum dikonfigurasi (VITE_LARAVEL_API_URL kosong),
  * hook ini tidak melakukan apa-apa (source tetap null) supaya halaman bisa
  * fallback ke sumber data lain (mis. mock/Firestore) tanpa error.

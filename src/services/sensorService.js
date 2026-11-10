@@ -47,7 +47,8 @@ export async function getLatestReading(koridorId) {
  * dua fungsi di bawah ini hanya pembungkus fetch tipis, supaya hook bisa
  * memanggil endpoint yang tepat tanpa tahu detail URL/format Laravel.
  *
- * Jenis sensor yang didukung sejauh ini: 'temperature', 'air_quality'.
+ * Jenis sensor yang didukung: 'temperature', 'air_quality', 'pm10', 'so2',
+ * 'co', 'o3', 'no2'.
  */
 async function fetchSensorEndpoint(path, sensorType, koridorId) {
   const params = new URLSearchParams({ sensor_type: sensorType });

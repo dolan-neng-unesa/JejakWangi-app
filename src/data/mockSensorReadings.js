@@ -22,3 +22,9 @@ export const latestReadingsByKoridor = {
     sensor_status: "online", // online | offline | stale
   },
 };
+
+// Konsentrasi polutan (µg/m³) untuk kartu ISPU di Home — cadangan kalau API
+// sensor Laravel belum aktif. Nilai contoh: sebagian Baik, sebagian Sedang.
+export const latestPollutantsByKoridor = {
+  1: { pm10: 82, so2: 21, co: 2400, o3: 140, no2: 46 },
+};

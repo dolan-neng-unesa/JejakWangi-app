@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Icon from "../components/global/Icon";
-import Skeleton from "../components/global/Skeleton";
+import PollutantCard from "../components/global/PollutantCard";
+import IspuLegend from "../components/global/IspuLegend";
 import BottomNav from "../components/layout/BottomNav";
-import { getKoridorDetail } from "../services/koridorService";
-import { useSensorReading } from "../hooks/useSensorReading";
+import { POLLUTANT_KEYS } from "../lib/ispu";
+import { latestPollutantsByKoridor } from "../data/mockSensorReadings";
 
 import route1 from "../assets/pages/home/route1.png";
 import route2 from "../assets/pages/home/route2.png";
@@ -33,55 +33,10 @@ const culinary = [
   { image: food2, name: "Kopi Osing", desc: "Biji kopi lokal Kemiren", price: "Rp 12k", rating: 4.7 },
 ];
 
-function EnvStat({ icon, status, value, unit, label, tone }) {
-  const toneClass =
-    tone === "live"
-      ? "text-canopy-700"
-      : tone === "stale"
-      ? "text-ochre-600"
-      : "text-canopy-700";
-  return (
-    <div className="min-w-[112px] bg-white rounded-2xl border border-canopy-800/10 p-3 shrink-0">
-      <div className="flex items-center justify-between">
-        <span className="h-6 w-6 rounded-full bg-canopy-100 text-canopy-700 flex items-center justify-center">
-          <Icon name={icon} size={13} />
-        </span>
-        <span className={`text-[0.6rem] font-medium uppercase tracking-wide ${toneClass}`}>{status}</span>
-      </div>
-      <p className="font-data text-lg text-ink-900 mt-2">
-        {value}
-        <span className="text-xs text-ink-500">{unit}</span>
-      </p>
-      <p className="text-xs text-ink-500">{label}</p>
-    </div>
-  );
-}
-
 export default function HomePage() {
-  const [env, setEnv] = useState(null);
-
-  useEffect(() => {
-    getKoridorDetail(1)
-      .then(setEnv)
-      .catch(() => setEnv(false));
-  }, []);
-
-  const sensor = env && env.sensor;
-
-  // Uji coba sensor suhu & kualitas udara lewat backend Laravel (lihat
-  // src/hooks/useSensorReading.js). Kalau VITE_LARAVEL_API_URL belum
-  // dikonfigurasi, source tetap null dan kartu di bawah otomatis jatuh
-  // balik memakai data koridor (Firestore/mock) seperti sebelumnya.
-  const temperature = useSensorReading("temperature", 1);
-  const airQuality = useSensorReading("air_quality", 1);
-
-  const suhuValue = temperature.source ? temperature.data.value : sensor?.suhu;
-  const suhuStatus = !temperature.source ? "Baik" : temperature.source === "live" ? "Live" : "Data Lama";
-  const suhuTone = !temperature.source ? "default" : temperature.isStale ? "stale" : "live";
-
-  const aqiValue = airQuality.source ? Math.round(airQuality.data.value) : sensor && Math.round(sensor.pm25);
-  const aqiStatus = !airQuality.source ? "Baik" : airQuality.source === "live" ? "Live" : "Data Lama";
-  const aqiTone = !airQuality.source ? "default" : airQuality.isStale ? "stale" : "live";
+  // Koridor yang ditampilkan di dashboard (diorama koridor 1).
+  const koridorId = 1;
+  const fallback = latestPollutantsByKoridor[koridorId];
 
   return (
     <div className="min-h-dvh flex flex-col bg-sand-100">
@@ -129,19 +84,13 @@ export default function HomePage() {
         </section>
 
         <h2 className="font-display font-bold text-lg text-ink-900 mt-6">Kondisi Lingkungan</h2>
-        <p className="text-xs text-ink-500 mt-0.5 mb-3">Data digital twin real-time koridor hijau</p>
+        <p className="text-xs text-ink-500 mt-0.5 mb-3">Indeks Standar Pencemar Udara (ISPU) koridor hijau</p>
         <div className="flex gap-2.5 overflow-x-auto -mx-4 px-4 pb-1 no-scrollbar">
-          {!sensor && env !== false && Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 min-w-[112px] shrink-0" />)}
-          {sensor && (
-            <>
-              <EnvStat icon="weather" status={aqiStatus} tone={aqiTone} value={aqiValue} unit=" AQI" label="Udara" />
-              <EnvStat icon="weather" status={suhuStatus} tone={suhuTone} value={suhuValue} unit="°C" label="Suhu" />
-              <EnvStat icon="drop" status="Ideal" value={sensor.kelembaban} unit="%" label="Lembab" />
-              <EnvStat icon="compass" status="Tinggi" value={Math.round(env.shade_score)} unit="%" label="Teduh" />
-              <EnvStat icon="weather" status="Rendah" value={sensor.uv_index} unit=" UV" label="UV Index" />
-            </>
-          )}
+          {POLLUTANT_KEYS.map((key) => (
+            <PollutantCard key={key} pollutant={key} koridorId={koridorId} fallbackValue={fallback[key]} />
+          ))}
         </div>
+        <IspuLegend />
 
         <h2 className="font-display font-bold text-lg text-ink-900 mt-6 mb-3">Menu Svarga</h2>
         <div className="grid grid-cols-3 gap-2.5">
