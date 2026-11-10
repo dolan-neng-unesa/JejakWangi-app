@@ -46,7 +46,7 @@ export default function KoridorListPage() {
     <div className="min-h-dvh flex flex-col bg-sand-50">
       <div className="mx-auto w-full max-w-md px-4 pt-[calc(env(safe-area-inset-top)+1.5rem)] pb-28">
         <h1 className="font-display font-bold text-2xl text-ink-900">Pilih Koridor Hijau</h1>
-        <p className="text-sm text-ink-500 mt-1">6 wilayah pemantauan sensor ekologis aktif saat ini.</p>
+        <p className="text-sm text-ink-500 mt-1">{koridors?.length ? `${koridors.length} wilayah` : "Wilayah"} pemantauan sensor ekologis aktif saat ini.</p>
 
         <div className="flex flex-col gap-4 mt-5">
           {!koridors && Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 w-full" />)}

@@ -113,16 +113,32 @@ describe("terapkanNeracaKarbon (jembatan ke koridor SVARGA)", () => {
 });
 
 describe("data mock koridor SVARGA", () => {
-  it("keenam koridor punya neraca karbon dan O₂ < CO₂ (sesuai 32/44)", async () => {
+  it("ketujuh koridor punya neraca karbon dan O₂ < CO₂ (sesuai 32/44)", async () => {
     vi.resetModules();
     vi.stubEnv("VITE_LARAVEL_API_URL", "");
     const { getKoridorList } = await import("../services/koridorService.js");
     const list = await getKoridorList();
-    expect(list).toHaveLength(6);
+    expect(list).toHaveLength(7);
     for (const k of list) {
       expect(k.carbon_balance, `koridor ${k.id}`).toBeTruthy();
       expect(k.oxygen_kg_day).toBeLessThan(k.co2_reduced_kg_day + 0.001);
     }
+    vi.unstubAllEnvs();
+  });
+
+  it("Koridor Pasar Induk (id 7) tampil di posisi 2 dan membawa konten detail", async () => {
+    vi.resetModules();
+    vi.stubEnv("VITE_LARAVEL_API_URL", "");
+    const { getKoridorList, getKoridorDetail } = await import("../services/koridorService.js");
+    const list = await getKoridorList();
+    // id = nomor wilayah ESP32 (tidak digeser); urutan tampil lewat sort_order.
+    expect(list.map((k) => k.id)).toEqual([1, 7, 2, 3, 4, 5, 6]);
+    expect(list[1]).toMatchObject({ short_name: "Corridor Pasar", formal_name: "Koridor Pasar Induk", umkm_count: 5, hijau_level: "agak_hijau" });
+
+    const pasar = await getKoridorDetail(7);
+    expect(pasar.highlights.kunjungan).toHaveLength(3);
+    expect(pasar.highlights.kunjungan.map((k) => k.sdg)).toEqual(["SDG 13", "SDG 12", "SDG 3 & 11"]);
+    expect(pasar.highlights.dampak).toMatchObject({ co2_kg: 85, kantong_plastik: 1240 });
     vi.unstubAllEnvs();
   });
 });
