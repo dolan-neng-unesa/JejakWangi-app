@@ -5,10 +5,11 @@ import BottomNav from "../components/layout/BottomNav";
 import { submitMood } from "../services/moodService";
 
 const moods = [
-  { score: 1, emoji: "😢", label: "Buruk" },
-  { score: 2, emoji: "😐", label: "Biasa" },
-  { score: 3, emoji: "🙂", label: "Baik" },
-  { score: 4, emoji: "😄", label: "Sangat Baik" },
+  { score: 1, emoji: "😭", label: "Sangat Buruk" },
+  { score: 2, emoji: "😢", label: "Buruk" },
+  { score: 3, emoji: "😐", label: "Biasa Saja" },
+  { score: 4, emoji: "🙂", label: "Baik" },
+  { score: 5, emoji: "😄", label: "Sangat Baik" },
 ];
 
 const activities = [
@@ -60,20 +61,20 @@ export default function MoodTrackerPage() {
 
         <div className="bg-white rounded-2xl border border-canopy-800/10 p-4 mt-4">
           <h2 className="font-semibold text-ink-900 text-center">Bagaimana perasaanmu hari ini?</h2>
-          <div className="grid grid-cols-4 gap-2 mt-4">
+          <div className="grid grid-cols-5 gap-1.5 mt-4">
             {moods.map((m) => {
               const isSelected = selectedMood === m.score;
               return (
                 <button
                   key={m.score}
                   onClick={() => setSelectedMood(m.score)}
-                  className={`flex flex-col items-center gap-1.5 rounded-2xl py-3 transition-colors ${
+                  className={`flex flex-col items-center gap-1 rounded-2xl py-2.5 transition-colors ${
                     isSelected ? "bg-canopy-100" : "hover:bg-sand-100"
                   }`}
                   aria-pressed={isSelected}
                 >
-                  <span className="text-2xl">{m.emoji}</span>
-                  <span className={`text-[0.65rem] leading-tight ${isSelected ? "text-canopy-700 font-medium" : "text-ink-500"}`}>
+                  <span className="text-xl">{m.emoji}</span>
+                  <span className={`text-[0.58rem] leading-tight text-center ${isSelected ? "text-canopy-700 font-medium" : "text-ink-500"}`}>
                     {m.label}
                   </span>
                 </button>

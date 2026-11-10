@@ -136,7 +136,7 @@ export default function RouteDetailPage() {
         </ul>
 
         <button
-          onClick={() => navigate(`/route/${id}/navigasi`)}
+          onClick={() => navigate(`/route/detail/${id}/navigasi`)}
           className="w-full mt-6 bg-canopy-700 text-sand-50 rounded-2xl py-3.5 font-medium"
         >
           Mulai Navigasi

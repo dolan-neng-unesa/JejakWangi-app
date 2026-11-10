@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import Icon from "../components/global/Icon";
@@ -31,8 +31,11 @@ const routeOptions = [
 
 export default function SmartGreenRoutePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [greenSpaces, setGreenSpaces] = useState([]);
-  const [selected, setSelected] = useState("terhijau");
+  // Kalau datang dari daftar Route A-E, preset dikirim lewat ?preset=... supaya
+  // opsi yang paling relevan sudah terpilih duluan (lihat RouteListPage.jsx).
+  const [selected, setSelected] = useState(() => searchParams.get("preset") ?? "terhijau");
 
   useEffect(() => {
     getGreenSpaces().then(setGreenSpaces);
@@ -143,7 +146,7 @@ export default function SmartGreenRoutePage() {
         </div>
 
         <button
-          onClick={() => navigate(`/route/${selected}`)}
+          onClick={() => navigate(`/route/detail/${selected}`)}
           className="w-full mt-4 bg-canopy-700 text-sand-50 rounded-2xl py-3.5 font-medium"
         >
           Tampilkan Rute

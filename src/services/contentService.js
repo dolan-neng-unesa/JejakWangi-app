@@ -54,3 +54,32 @@ export async function getBfestCalendar() {
   const snap = await getDocs(query(collection(db, "bfest"), orderBy("date")));
   return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
 }
+
+/**
+ * Ambil event festival untuk satu bulan kalender (bukan cuma yang akan
+ * datang — event yang sudah lewat di bulan itu tetap perlu ditampilkan
+ * sebagai titik penanda di grid kalender), dengan filter kategori opsional.
+ * Dipakai halaman Kalender BWI Fest (BwiFestPage.jsx).
+ */
+export async function getFestivalsByMonth(yearMonth, category) {
+  const params = new URLSearchParams({ month: yearMonth, per_page: "100" });
+  if (category) params.set("category", category);
+
+  if (USE_LARAVEL_API) {
+    try {
+      return await fetchLaravel(`/festivals?${params.toString()}`);
+    } catch (err) {
+      console.warn("Laravel API (festivals) tidak terjangkau, jatuh ke fallback:", err.message);
+    }
+  }
+
+  if (USE_MOCK) {
+    await delay();
+    return bfestEvents.filter((e) => e.date.startsWith(yearMonth) && (!category || e.category === category));
+  }
+
+  const snap = await getDocs(query(collection(db, "bfest"), orderBy("date")));
+  return snap.docs
+    .map((d) => ({ id: Number(d.id), ...d.data() }))
+    .filter((e) => e.date?.startsWith(yearMonth) && (!category || e.category === category));
+}

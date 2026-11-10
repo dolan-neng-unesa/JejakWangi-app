@@ -5,12 +5,13 @@ import BottomNav from "../components/layout/BottomNav";
 import Skeleton from "../components/global/Skeleton";
 import { getMoodSummary } from "../services/moodService";
 
-// Skala mood_score (1..4) disamakan dengan moods[] di MoodTrackerPage.jsx.
+// Skala mood_score (1..5) disamakan dengan moods[] di MoodTrackerPage.jsx.
 const SCORE_META = {
-  4: { label: "Sangat Baik", emoji: "😄", color: "bg-canopy-800" },
-  3: { label: "Baik", emoji: "🙂", color: "bg-canopy-600" },
-  2: { label: "Biasa Saja", emoji: "😐", color: "bg-ochre-500" },
-  1: { label: "Buruk", emoji: "😢", color: "bg-orange-500" },
+  5: { label: "Sangat Baik", emoji: "😄", color: "bg-canopy-800" },
+  4: { label: "Baik", emoji: "🙂", color: "bg-canopy-600" },
+  3: { label: "Biasa Saja", emoji: "😐", color: "bg-ochre-500" },
+  2: { label: "Buruk", emoji: "😢", color: "bg-orange-500" },
+  1: { label: "Sangat Buruk", emoji: "😭", color: "bg-alert-600" },
 };
 
 function emojiForAverage(avg) {
@@ -37,7 +38,7 @@ export default function MoodHistoryPage() {
   const maxValue = Math.max(1, ...daily.map((d) => d.average_score ?? 0));
   const total = summary?.total_entries ?? 0;
 
-  const distributionRows = [4, 3, 2, 1].map((score) => {
+  const distributionRows = [5, 4, 3, 2, 1].map((score) => {
     const count = summary?.distribution?.[score] ?? 0;
     const percent = total > 0 ? Math.round((count / total) * 100) : 0;
     return { score, count, percent, ...SCORE_META[score] };

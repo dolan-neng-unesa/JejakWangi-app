@@ -11,6 +11,7 @@ import HomePage from "./pages/HomePage";
 import KoridorListPage from "./pages/KoridorListPage";
 import KoridorDetailPage from "./pages/KoridorDetailPage";
 import MapPage from "./pages/MapPage";
+import RouteListPage from "./pages/RouteListPage";
 import SmartGreenRoutePage from "./pages/SmartGreenRoutePage";
 import RouteDetailPage from "./pages/RouteDetailPage";
 import NavigationPage from "./pages/NavigationPage";
@@ -46,9 +47,11 @@ export default function App() {
 
           <Route path="/map" element={<MapPage />} />
 
-          <Route path="/route" element={<SmartGreenRoutePage />} />
-          <Route path="/route/:id" element={<RouteDetailPage />} />
-          <Route path="/route/:id/navigasi" element={<NavigationPage />} />
+          {/* Alur Smart Green Route: daftar rute -> peta & pilih rute -> detail -> navigasi */}
+          <Route path="/route" element={<RouteListPage />} />
+          <Route path="/route/pilih" element={<SmartGreenRoutePage />} />
+          <Route path="/route/detail/:id" element={<RouteDetailPage />} />
+          <Route path="/route/detail/:id/navigasi" element={<NavigationPage />} />
 
           <Route path="/mood" element={<MoodTrackerPage />} />
           <Route path="/mood/riwayat" element={<MoodHistoryPage />} />

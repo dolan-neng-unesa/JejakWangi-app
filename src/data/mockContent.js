@@ -67,7 +67,7 @@ export const umkms = [
 ];
 
 export const bfestEvents = [
-  { id: 1, green_space_id: 2, bfest_name: "Banyuwangi Ethno Carnival", location_type: "panggung", location_name: "Taman Blambangan", date: "2026-09-12" },
-  { id: 2, green_space_id: 2, bfest_name: "Festival Gandrung Sewu", location_type: "panggung", location_name: "Pantai Boom", date: "2026-09-24" },
-  { id: 3, green_space_id: 2, bfest_name: "Festival Kuwung", location_type: "panggung", location_name: "Taman Blambangan", date: "2026-10-03" },
+  { id: 1, green_space_id: 2, bfest_name: "Banyuwangi Ethno Carnival", location_type: "panggung", location_name: "Taman Blambangan", category: "budaya", address: "Jl. Veteran – Taman Blambangan", date: "2026-09-12", start_time: "09:00", end_time: "22:00" },
+  { id: 2, green_space_id: 2, bfest_name: "Festival Gandrung Sewu", location_type: "panggung", location_name: "Pantai Boom", category: "seni", address: "Pantai Boom", date: "2026-09-24", start_time: "19:00", end_time: "23:00" },
+  { id: 3, green_space_id: 2, bfest_name: "Festival Kuwung", location_type: "panggung", location_name: "Taman Blambangan", category: "pariwisata", address: "Taman Blambangan", date: "2026-10-03", start_time: "16:00", end_time: "21:00" },
 ];

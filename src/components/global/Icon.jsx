@@ -1,5 +1,9 @@
 // Kumpulan ikon garis sederhana bergaya konsisten (stroke, 1.6px, rounded).
 // Dipakai lintas komponen global agar tidak bergantung pada asset PNG eksternal.
+//
+// Bisa diganti pakai gambar sendiri per-ikon lewat customIcons.js, tanpa
+// perlu ubah kode di halaman manapun — lihat komentar di file itu.
+import { customIcons } from "./customIcons";
 
 const paths = {
   home: "M4 11.5 12 4l8 7.5M6 10v9a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-9",
@@ -55,6 +59,23 @@ const paths = {
 };
 
 export default function Icon({ name, size = 22, className = "", strokeWidth = 1.7 }) {
+  // Kalau ikon ini sudah didaftarkan di customIcons.js, pakai gambar itu
+  // (bukan lagi SVG path bawaan) — <Icon name="..."> di seluruh app tidak
+  // perlu diubah sama sekali, ini satu-satunya titik yang menentukan sumbernya.
+  const customSrc = customIcons[name];
+  if (customSrc) {
+    return (
+      <img
+        src={customSrc}
+        width={size}
+        height={size}
+        className={className}
+        style={{ objectFit: "contain", display: "inline-block" }}
+        alt=""
+      />
+    );
+  }
+
   const d = paths[name];
   if (!d) return null;
   return (

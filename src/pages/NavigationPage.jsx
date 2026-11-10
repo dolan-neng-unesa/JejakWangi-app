@@ -84,7 +84,7 @@ export default function NavigationPage() {
             <p className="text-xs text-ink-500 mt-0.5">Estimasi tiba dalam 9 menit</p>
           </div>
           <button
-            onClick={() => navigate(`/route/${id}`)}
+            onClick={() => navigate(`/route/detail/${id}`)}
             className="text-alert-600 bg-alert-600/10 text-sm font-medium px-4 py-2 rounded-full"
           >
             Akhiri Navigasi
