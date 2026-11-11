@@ -4,6 +4,7 @@ import Icon from "../components/global/Icon";
 import Skeleton from "../components/global/Skeleton";
 import BottomNav from "../components/layout/BottomNav";
 import { getKoridorList } from "../services/koridorService";
+import SmartImage from "../components/global/SmartImage";
 
 const hijauBadge = {
   paling_hijau: { label: "Paling Hijau", className: "bg-canopy-700 text-sand-50" },
@@ -52,7 +53,7 @@ export default function KoridorListPage() {
                 to={`/koridor/${k.id}`}
                 className="bg-white rounded-2xl border border-canopy-800/10 p-3 flex gap-3"
               >
-                <img
+                <SmartImage
                   src={k.thumbnail}
                   alt={k.short_name}
                   className="h-20 w-20 rounded-xl object-cover shrink-0"

@@ -132,3 +132,15 @@ serve`) lalu lihat README-nya untuk cara mengirim data sensor simulasi.
 - Galat `ERR_CONNECTION_REFUSED` ke `localhost:8000` di konsol berarti server Laravel
   belum jalan (`php artisan serve` di `svarga-backend`). Itu log jaringan bawaan browser;
   app tetap jalan dengan data mock dan hanya memicunya sekali per muat halaman.
+
+### API key tile peta
+
+Leaflet tidak memerlukan API key; yang meminta key adalah penyedia tile. Kalau tile
+menampilkan tulisan "API key required", isi di `.env.local` (lalu restart `npm run dev`):
+
+```
+VITE_MAPTILER_API_KEY=isi_key_dari_maptiler_cloud
+```
+
+Daftar gratis di maptiler.com → Account → API keys. Jangan commit key ke repo publik
+(batasi domain key di dashboard MapTiler). Tanpa key, peta memakai OpenStreetMap standar.

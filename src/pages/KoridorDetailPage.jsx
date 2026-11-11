@@ -6,6 +6,7 @@ import Skeleton from "../components/global/Skeleton";
 import BottomNav from "../components/layout/BottomNav";
 import { getKoridorDetail } from "../services/koridorService";
 import { getUmkmByKoridor } from "../services/contentService";
+import SmartImage from "../components/global/SmartImage";
 
 const goodStatus = ["Sehat", "Sejuk", "Nyaman", "Tenang", "Rendah"];
 const badStatus = ["Panas", "Bising", "Tinggi", "Tidak Sehat", "Kering"];
@@ -78,7 +79,7 @@ export default function KoridorDetailPage() {
 
         {koridor && (
           <>
-            <img
+            <SmartImage
               src={koridor.hero_image}
               alt={koridor.formal_name}
               className="w-full h-44 object-cover rounded-2xl mt-4"
@@ -115,7 +116,7 @@ export default function KoridorDetailPage() {
                       to="/umkm"
                       className="min-w-[168px] bg-white rounded-2xl border border-canopy-800/10 overflow-hidden shrink-0"
                     >
-                      <img src={u.image} alt={u.business_name} className="h-24 w-full object-cover" />
+                      <SmartImage src={u.image} alt={u.business_name} className="h-24 w-full object-cover" />
                       <div className="p-2.5">
                         <p className="font-medium text-sm text-ink-900 truncate">{u.business_name}</p>
                         <p className="text-xs text-ink-500">{u.business_type}</p>

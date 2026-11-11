@@ -4,6 +4,7 @@ import Card from "../components/global/Card";
 import Icon from "../components/global/Icon";
 import Skeleton from "../components/global/Skeleton";
 import { getUmkmByKoridor } from "../services/contentService";
+import SmartImage from "../components/global/SmartImage";
 
 export default function UmkmPage() {
   const [umkm, setUmkm] = useState(null);
@@ -22,7 +23,7 @@ export default function UmkmPage() {
         {umkm?.map((u) => (
           <Card key={u.id} className="overflow-hidden flex items-stretch gap-3 p-3">
             {u.image ? (
-              <img src={u.image} alt={u.business_name} className="h-20 w-20 rounded-xl object-cover shrink-0" />
+              <SmartImage src={u.image} alt={u.business_name} className="h-20 w-20 rounded-xl object-cover shrink-0" />
             ) : (
               <span className="h-20 w-20 rounded-xl bg-canopy-100 text-canopy-700 flex items-center justify-center shrink-0">
                 <Icon name="cutlery" size={22} />

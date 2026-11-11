@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Icon from "../global/Icon";
+import SmartImage from "../global/SmartImage";
 
 /**
  * Overlay dalam-app yang mensimulasikan notifikasi "Zona Aktif" saat pengguna
@@ -20,7 +21,8 @@ export default function GeofenceAlert({ zone, soundscape, onClose }) {
       {/* Latar ilustrasi — dipotong langsung dari mockup geofencing-aktif.png.
           Zona tanpa ilustrasi khusus jatuh ke gradasi hijau bermerek. */}
       {zone.background_image ? (
-        <img
+        <SmartImage
+          hideOnError
           src={zone.background_image}
           alt=""
           aria-hidden="true"

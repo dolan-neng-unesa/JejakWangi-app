@@ -6,6 +6,7 @@ import BottomNav from "../components/layout/BottomNav";
 import { getFestivalsByMonth } from "../services/contentService";
 import route1 from "../assets/pages/home/route1.png";
 import route2 from "../assets/pages/home/route2.png";
+import SmartImage from "../components/global/SmartImage";
 
 const FALLBACK_IMAGES = [route1, route2];
 const WEEKDAYS = ["Sn", "Sl", "Rb", "Km", "Jm", "Sb", "Mg"];
@@ -250,8 +251,9 @@ export default function BwiFestPage() {
             const isBookmarked = bookmarks.has(e.id);
             return (
               <div key={e.id} className="bg-white rounded-2xl border border-canopy-800/10 overflow-hidden flex gap-3 p-3">
-                <img
-                  src={e.image ?? FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]}
+                <SmartImage
+                  src={e.image}
+                  fallbackSrc={FALLBACK_IMAGES[i % FALLBACK_IMAGES.length]}
                   alt={e.bfest_name}
                   className="h-20 w-20 rounded-xl object-cover shrink-0"
                 />
