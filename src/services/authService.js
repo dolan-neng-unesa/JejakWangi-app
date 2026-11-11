@@ -9,10 +9,23 @@ import {
   signOut,
   updateProfile,
 } from "firebase/auth";
-import { firebaseApp } from "./firebaseClient";
-import { USE_MOCK, delay, USE_LARAVEL_API, LARAVEL_API_BASE } from "./config";
+import { hasFirebaseCredentials, getFirebaseApp } from "./firebaseClient";
+import { USE_MOCK, delay, USE_LARAVEL_API } from "./config";
+import { apiRequest, ApiError } from "./laravelClient";
+import { AUTH_EVENT, readSession, writeSession, updateSessionUser, clearSession, getToken } from "./sessionStore";
 
-export const auth = firebaseApp ? getAuth(firebaseApp) : null;
+let authInstance = null;
+let authPromise = null;
+
+/** Instance Firebase Auth, dibuat saat pertama dibutuhkan; null bila kredensial belum diisi. */
+function getAuthInstance() {
+  if (!hasFirebaseCredentials) return Promise.resolve(null);
+  authPromise ??= getFirebaseApp().then((app) => (authInstance = getAuth(app)));
+  return authPromise;
+}
+
+/** Kata sandi minimal — harus sama dengan aturan backend (AuthController). */
+export const MIN_PASSWORD_LENGTH = 8;
 
 /**
  * Email/kata sandi lewat Laravel Sanctum (token-based) — menggantikan Firebase
@@ -20,46 +33,32 @@ export const auth = firebaseApp ? getAuth(firebaseApp) : null;
  * TETAP lewat Firebase/mock di bawah karena OAuth popup butuh provider yang
  * belum diatur di backend Laravel; hanya email/password yang dipindah.
  * Urutan sumber tetap sama seperti fitur lain: Laravel -> Firebase -> mock.
+ *
+ * Sesi aktif bisa datang dari tiga sumber sekaligus (Laravel, mock, Firebase);
+ * subscribeToAuthChanges() menggabungkan ketiganya — lihat di bawah.
  */
-const LARAVEL_TOKEN_KEY = "svarga_laravel_token";
-const LARAVEL_USER_KEY = "svarga_laravel_user";
-
-function readLaravelSession() {
-  const token = localStorage.getItem(LARAVEL_TOKEN_KEY);
-  const userJson = localStorage.getItem(LARAVEL_USER_KEY);
-  if (!token || !userJson) return null;
-  try {
-    return { token, user: JSON.parse(userJson) };
-  } catch {
-    return null;
-  }
-}
-
-function writeLaravelSession(user, token) {
-  if (user && token) {
-    localStorage.setItem(LARAVEL_TOKEN_KEY, token);
-    localStorage.setItem(LARAVEL_USER_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(LARAVEL_TOKEN_KEY);
-    localStorage.removeItem(LARAVEL_USER_KEY);
-  }
-  window.dispatchEvent(new Event("svarga-mock-auth-change"));
-}
 
 /** Bentuk objek user disamakan dengan Firebase (uid/email/displayName) supaya UI pemanggil tidak perlu tahu bedanya. */
 function toAppUser(laravelUser) {
   return { uid: `laravel-${laravelUser.id}`, email: laravelUser.email, displayName: laravelUser.name };
 }
 
+/** Ubah galat apa pun jadi Error dengan pesan yang ramah ditampilkan ke pengguna. */
+function toUserError(err) {
+  if (err instanceof ApiError) {
+    // 401 saat login = kredensial salah; pesan server sudah ramah ("Email atau kata sandi salah.").
+    return new Error(err.friendlyMessage);
+  }
+  return err instanceof Error ? err : new Error(String(err));
+}
+
 async function laravelAuthRequest(path, body) {
-  const res = await fetch(`${LARAVEL_API_BASE}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.message ?? "Gagal menghubungi server autentikasi.");
-  return json; // { user: {id, name, email}, token }
+  try {
+    // breaker:false → login/daftar selalu dicoba walau pemutus sirkuit sedang aktif untuk request data.
+    return await apiRequest(path, { method: "POST", body, breaker: false });
+  } catch (err) {
+    throw toUserError(err);
+  }
 }
 
 // --- Mode mock: sesi disimpan di localStorage, meniru bentuk objek user Firebase ---
@@ -74,10 +73,14 @@ function readMockUser() {
 }
 
 function writeMockUser(user) {
-  if (user) localStorage.setItem(MOCK_USER_KEY, JSON.stringify(user));
-  else localStorage.removeItem(MOCK_USER_KEY);
+  try {
+    if (user) localStorage.setItem(MOCK_USER_KEY, JSON.stringify(user));
+    else localStorage.removeItem(MOCK_USER_KEY);
+  } catch {
+    // storage tidak tersedia — abaikan.
+  }
   // Supaya komponen lain yang subscribe (subscribeToAuthChanges) di tab yang sama ikut update.
-  window.dispatchEvent(new Event("svarga-mock-auth-change"));
+  window.dispatchEvent(new Event(AUTH_EVENT));
 }
 
 function friendlyAuthError(err) {
@@ -88,9 +91,10 @@ function friendlyAuthError(err) {
     "auth/wrong-password": "Kata sandi salah.",
     "auth/invalid-credential": "Email atau kata sandi salah.",
     "auth/email-already-in-use": "Email ini sudah terdaftar. Coba masuk, bukan daftar.",
-    "auth/weak-password": "Kata sandi minimal 6 karakter.",
+    "auth/weak-password": `Kata sandi minimal ${MIN_PASSWORD_LENGTH} karakter.`,
     "auth/popup-closed-by-user": "Jendela login ditutup sebelum selesai.",
     "auth/network-request-failed": "Gagal terhubung ke server. Cek koneksi internet.",
+    "auth/too-many-requests": "Terlalu banyak percobaan. Coba lagi beberapa saat lagi.",
   };
   return map[code] ?? err?.message ?? "Terjadi kesalahan saat autentikasi.";
 }
@@ -98,8 +102,8 @@ function friendlyAuthError(err) {
 /** Masuk dengan email & kata sandi. */
 export async function signInWithEmail(email, password) {
   if (USE_LARAVEL_API) {
-    const { user, token } = await laravelAuthRequest("/auth/login", { email, password });
-    writeLaravelSession(user, token);
+    const { user, token, expires_at: expiresAt } = await laravelAuthRequest("/auth/login", { email: email.trim(), password });
+    writeSession(user, token, expiresAt);
     return toAppUser(user);
   }
   if (USE_MOCK) {
@@ -110,7 +114,7 @@ export async function signInWithEmail(email, password) {
     return user;
   }
   try {
-    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const cred = await signInWithEmailAndPassword(await getAuthInstance(), email, password);
     return cred.user;
   } catch (err) {
     throw new Error(friendlyAuthError(err));
@@ -119,25 +123,27 @@ export async function signInWithEmail(email, password) {
 
 /** Daftar akun baru dengan email & kata sandi. */
 export async function registerWithEmail(email, password, displayName) {
+  if (password && password.length < MIN_PASSWORD_LENGTH) {
+    throw new Error(`Kata sandi minimal ${MIN_PASSWORD_LENGTH} karakter.`);
+  }
   if (USE_LARAVEL_API) {
-    const { user, token } = await laravelAuthRequest("/auth/register", {
-      name: displayName || email.split("@")[0],
-      email,
+    const { user, token, expires_at: expiresAt } = await laravelAuthRequest("/auth/register", {
+      name: displayName?.trim() || email.split("@")[0],
+      email: email.trim(),
       password,
     });
-    writeLaravelSession(user, token);
+    writeSession(user, token, expiresAt);
     return toAppUser(user);
   }
   if (USE_MOCK) {
     await delay(400);
     if (!email || !password) throw new Error("Email dan kata sandi wajib diisi.");
-    if (password.length < 6) throw new Error("Kata sandi minimal 6 karakter.");
     const user = { uid: `mock-${email}`, email, displayName: displayName || email.split("@")[0] };
     writeMockUser(user);
     return user;
   }
   try {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const cred = await createUserWithEmailAndPassword(await getAuthInstance(), email, password);
     if (displayName) await updateProfile(cred.user, { displayName });
     return cred.user;
   } catch (err) {
@@ -154,7 +160,7 @@ export async function signInWithGoogle() {
     return user;
   }
   try {
-    const cred = await signInWithPopup(auth, new GoogleAuthProvider());
+    const cred = await signInWithPopup(await getAuthInstance(), new GoogleAuthProvider());
     return cred.user;
   } catch (err) {
     throw new Error(friendlyAuthError(err));
@@ -173,60 +179,98 @@ export async function signInWithFacebook() {
     return user;
   }
   try {
-    const cred = await signInWithPopup(auth, new FacebookAuthProvider());
+    const cred = await signInWithPopup(await getAuthInstance(), new FacebookAuthProvider());
     return cred.user;
   } catch (err) {
     throw new Error(friendlyAuthError(err));
   }
 }
 
+/** Keluar dari SEMUA sumber sesi (Laravel, mock, Firebase) — pengguna bisa saja punya lebih dari satu aktif. */
 export async function signOutUser() {
-  const laravelSession = readLaravelSession();
-  if (laravelSession) {
+  if (readSession()) {
     try {
-      await fetch(`${LARAVEL_API_BASE}/auth/logout`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${laravelSession.token}` },
-      });
+      await apiRequest("/auth/logout", { method: "POST", auth: true, breaker: false, timeoutMs: 5000 });
     } catch {
-      // Tetap bersihkan sesi lokal walau request logout gagal (mis. server sedang mati).
+      // Tetap bersihkan sesi lokal walau request logout gagal (mis. server sedang mati / token sudah kedaluwarsa).
     }
-    writeLaravelSession(null, null);
-    return;
+    clearSession();
   }
-  if (USE_MOCK) {
-    writeMockUser(null);
-    return;
-  }
-  await signOut(auth);
+  if (readMockUser()) writeMockUser(null);
+  const firebaseAuth = await getAuthInstance();
+  if (firebaseAuth?.currentUser) await signOut(firebaseAuth);
 }
 
 /** Ambil access token Sanctum yang sedang aktif, untuk dipakai request otentikasi lain (mis. submit mood). */
 export function getLaravelToken() {
-  return readLaravelSession()?.token ?? null;
+  return getToken();
 }
 
-/** Subscribe ke perubahan status login. Mengembalikan fungsi unsubscribe. */
+/**
+ * Cek ke server bahwa token tersimpan masih berlaku. Tanpa ini pengguna yang tokennya
+ * sudah dicabut/kedaluwarsa (atau akunnya dinonaktifkan admin) tetap tampak "login" di
+ * perangkat selamanya. Hanya galat 401/403 yang menghapus sesi — server mati atau
+ * jaringan putus TIDAK boleh membuat pengguna ter-logout.
+ */
+let validating = null;
+export function validateLaravelSession() {
+  if (!USE_LARAVEL_API || !readSession()) return Promise.resolve(false);
+  validating ??= apiRequest("/auth/me", { auth: true, breaker: false, timeoutMs: 8000 })
+    .then((json) => {
+      const user = json?.data ?? json;
+      if (user?.id) updateSessionUser(user);
+      return true;
+    })
+    .catch((err) => {
+      if (err instanceof ApiError && err.status === 403) clearSession(); // akun dinonaktifkan (401 sudah ditangani apiRequest)
+      return false;
+    })
+    .finally(() => {
+      validating = null;
+    });
+  return validating;
+}
+
+/** Pengguna aktif saat ini dari sumber mana pun: sesi Laravel > mock > Firebase. */
+function currentUser() {
+  const session = USE_LARAVEL_API ? readSession() : null;
+  if (session) return toAppUser(session.user);
+  const mock = USE_MOCK ? readMockUser() : null;
+  if (mock) return mock;
+  return authInstance?.currentUser ?? null;
+}
+
+/**
+ * Subscribe ke perubahan status login. Mengembalikan fungsi unsubscribe.
+ * Sebelumnya, saat VITE_LARAVEL_API_URL terisi, hanya sesi Laravel yang diamati sehingga
+ * login Google/Facebook/mock tidak pernah terdeteksi. Sekarang ketiga sumber digabung,
+ * dan token Laravel yang tersimpan divalidasi ke server sekali di awal.
+ */
 export function subscribeToAuthChanges(callback) {
-  if (USE_LARAVEL_API) {
-    callback(readLaravelSession() ? toAppUser(readLaravelSession().user) : null);
-    const handler = () => callback(readLaravelSession() ? toAppUser(readLaravelSession().user) : null);
-    window.addEventListener("svarga-mock-auth-change", handler);
-    window.addEventListener("storage", handler);
-    return () => {
-      window.removeEventListener("svarga-mock-auth-change", handler);
-      window.removeEventListener("storage", handler);
-    };
-  }
-  if (USE_MOCK) {
-    callback(readMockUser());
-    const handler = () => callback(readMockUser());
-    window.addEventListener("svarga-mock-auth-change", handler);
-    window.addEventListener("storage", handler);
-    return () => {
-      window.removeEventListener("svarga-mock-auth-change", handler);
-      window.removeEventListener("storage", handler);
-    };
-  }
-  return onAuthStateChanged(auth, callback);
+  let last;
+  const emit = () => {
+    const user = currentUser();
+    const key = user?.uid ?? null;
+    if (key === last) return;
+    last = key;
+    callback(user);
+  };
+
+  emit();
+  window.addEventListener(AUTH_EVENT, emit);
+  window.addEventListener("storage", emit); // sinkron antar-tab
+  let unsubscribeFirebase = null;
+  let disposed = false;
+  getAuthInstance().then((firebaseAuth) => {
+    if (firebaseAuth && !disposed) unsubscribeFirebase = onAuthStateChanged(firebaseAuth, emit);
+  });
+
+  validateLaravelSession();
+
+  return () => {
+    disposed = true;
+    window.removeEventListener(AUTH_EVENT, emit);
+    window.removeEventListener("storage", emit);
+    unsubscribeFirebase?.();
+  };
 }

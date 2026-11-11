@@ -1,100 +1,37 @@
-import { useEffect, useRef, useState } from "react";
-import { getLiveSensorReading, getLastSensorReadingFromDb } from "../services/sensorService";
+import { useMemo } from "react";
+import { useSensorSnapshot } from "./useSensorSnapshot";
 
 /**
- * Uji coba konsumsi 2 API sensor di FE (arahan mentor ke Radhi, 7 Sep 2026):
+ * Bacaan satu jenis sensor/polutan ('temperature', 'pm25', 'pm10', 'so2', 'co', 'o3', 'no2', ...)
+ * untuk satu koridor, diambil dari snapshot (1 request untuk semua jenis).
  *
- *   "tambahin kondisi untuk konsumsi 2 api, jeda load api yang dikonsum
- *    sama BE itu 5 menit, jika FE tidak konsumsi api dari sensor langsung
- *    dalam 5 menit itu ada opsi buat ngambil last data dari DB"
+ * Arahan mentor (7 Sep 2026): data "langsung" jika segar (< 5 menit), jika tidak tampilkan
+ * data terakhir dari DB dan tandai sebagai data lama. Penentuan segar/tidaknya dilakukan
+ * backend per bacaan (`is_stale`, jendela 5 menit = SensorReadingModel::FRESHNESS_WINDOW_MINUTES),
+ * jadi tidak perlu lagi dua endpoint terpisah (/live & /latest — keduanya memang tidak ada di
+ * backend dan selalu 404) maupun penghitung 5 menit di FE.
  *
- * Cara kerja hook ini:
- *   1. Poll GET /api/sensors/live setiap POLL_INTERVAL_MS (default 30 detik).
- *   2. Simpan kapan terakhir kali dapat data "segar" (is_stale: false).
- *   3. Kalau sudah FRESHNESS_WINDOW_MS (5 menit) berlalu sejak data segar
- *      terakhir — artinya FE gagal "konsumsi API dari sensor langsung"
- *      dalam jendela waktu itu — hook otomatis memanggil
- *      GET /api/sensors/latest sebagai fallback dan menandai `source: 'db'`
- *      + `isStale: true`, supaya UI bisa menampilkan indikator "data lama".
- *   4. Begitu /live kembali memberi data segar, sumber otomatis balik ke
- *      'live' lagi tanpa perlu reload halaman.
+ * Return: { data, source, isStale, loading, error }
+ *   data   — { sensor_type, value, unit, recorded_at } atau null
+ *   source — 'live' (segar) | 'db' (data lama) | null (belum ada bacaan / backend tidak aktif)
  *
- * Dipakai untuk 'temperature', 'air_quality', dan polutan ISPU: 'pm10',
- * 'so2', 'co', 'o3', 'no2' (lihat src/lib/ispu.js).
- * Kalau backend Laravel belum dikonfigurasi (VITE_LARAVEL_API_URL kosong),
- * hook ini tidak melakukan apa-apa (source tetap null) supaya halaman bisa
- * fallback ke sumber data lain (mis. mock/Firestore) tanpa error.
+ * Banyak kartu polutan di satu halaman memanggil hook ini dengan koridor yang sama; request
+ * snapshot-nya digabung oleh cache singkat di sensorService, bukan satu request per kartu.
  */
-
-const FRESHNESS_WINDOW_MS = 5 * 60 * 1000; // 5 menit, samakan dengan BE (SensorReadingController::FRESHNESS_WINDOW_MINUTES)
-const POLL_INTERVAL_MS = 30 * 1000; // seberapa sering FE mencoba /live
+const POLL_INTERVAL_MS = 30 * 1000;
 
 export function useSensorReading(sensorType, koridorId, options = {}) {
-  const pollIntervalMs = options.pollIntervalMs ?? POLL_INTERVAL_MS;
+  const snap = useSensorSnapshot(koridorId, options.pollIntervalMs ?? POLL_INTERVAL_MS);
+  const reading = snap.readings[sensorType] ?? null;
 
-  const [state, setState] = useState({
-    data: null, // { id, device_code, sensor_type, value, unit, recorded_at }
-    source: null, // 'live' | 'db' | null (belum ada data sama sekali)
-    isStale: false,
-    loading: true,
-    error: null,
-  });
-
-  // Kapan terakhir kali FE benar-benar berhasil "konsumsi API dari sensor
-  // langsung" (live, bukan fallback DB). Dipakai untuk menghitung jendela 5 menit.
-  const lastFreshAtRef = useRef(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    let timerId;
-
-    async function tick() {
-      try {
-        const live = await getLiveSensorReading(sensorType, koridorId);
-
-        if (cancelled) return;
-
-        if (live && !live.is_stale && live.data) {
-          // Kondisi 1: berhasil konsumsi API langsung dalam jendela 5 menit.
-          lastFreshAtRef.current = Date.now();
-          setState({ data: live.data, source: "live", isStale: false, loading: false, error: null });
-          return;
-        }
-
-        // /live tidak punya data segar. Cek sudah berapa lama sejak terakhir fresh.
-        const elapsedSinceFresh = lastFreshAtRef.current ? Date.now() - lastFreshAtRef.current : Infinity;
-
-        if (elapsedSinceFresh < FRESHNESS_WINDOW_MS) {
-          // Belum genap 5 menit sejak data segar terakhir — cukup tunggu polling
-          // berikutnya, tidak perlu fallback dulu (hindari flicker ke data lama).
-          return;
-        }
-
-        // Kondisi 2: FE tidak berhasil konsumsi API sensor langsung selama
-        // 5 menit -> ambil last data dari DB sebagai fallback.
-        const fallback = await getLastSensorReadingFromDb(sensorType, koridorId);
-        if (cancelled) return;
-
-        if (fallback?.data) {
-          setState({ data: fallback.data, source: "db", isStale: true, loading: false, error: null });
-        } else {
-          setState((prev) => ({ ...prev, loading: false }));
-        }
-      } catch (err) {
-        if (cancelled) return;
-        setState((prev) => ({ ...prev, loading: false, error: err.message }));
-      }
-    }
-
-    tick();
-    timerId = setInterval(tick, pollIntervalMs);
-
-    return () => {
-      cancelled = true;
-      clearInterval(timerId);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sensorType, koridorId, pollIntervalMs]);
-
-  return state;
+  return useMemo(
+    () => ({
+      data: reading,
+      source: reading ? (reading.is_stale ? "db" : "live") : null,
+      isStale: reading ? Boolean(reading.is_stale) : false,
+      loading: snap.loading,
+      error: snap.error,
+    }),
+    [reading, snap.loading, snap.error]
+  );
 }

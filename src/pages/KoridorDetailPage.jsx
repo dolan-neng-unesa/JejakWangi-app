@@ -43,9 +43,20 @@ export default function KoridorDetailPage() {
   const [umkm, setUmkm] = useState([]);
 
   useEffect(() => {
+    // `cancelled` mencegah balasan koridor lama menimpa koridor baru bila id berubah
+    // sebelum request sebelumnya selesai (atau halaman sudah ditinggalkan).
+    let cancelled = false;
     setKoridor(null);
-    getKoridorDetail(id).then(setKoridor).catch(() => setKoridor(false));
-    getUmkmByKoridor(id).then(setUmkm);
+    setUmkm([]);
+    getKoridorDetail(id)
+      .then((data) => !cancelled && setKoridor(data))
+      .catch(() => !cancelled && setKoridor(false));
+    getUmkmByKoridor(id)
+      .then((list) => !cancelled && setUmkm(list))
+      .catch(() => !cancelled && setUmkm([]));
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   return (

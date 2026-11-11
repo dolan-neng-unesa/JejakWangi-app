@@ -1,8 +1,7 @@
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { USE_MOCK, USE_FIRESTORE_FALLBACK, delay } from "./config";
 import { fetchLaravel, isLaravelAvailable } from "./laravelClient";
 import { withTimeout } from "./withTimeout";
-import { db } from "./firebaseClient";
+import { loadFirestore } from "./firebaseClient";
 import { umkms, bfestEvents } from "../data/mockContent";
 
 /**
@@ -46,6 +45,7 @@ export async function getUmkmList() {
     return umkms.filter((u) => u.is_active);
   }
   return safeFirestore(async () => {
+    const { db, getDocs, collection } = await loadFirestore();
     const snap = await getDocs(collection(db, "umkms"));
     return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
   }, () => umkms.filter((u) => u.is_active));
@@ -54,7 +54,7 @@ export async function getUmkmList() {
 export async function getUmkmByKoridor(koridorId) {
   if (isLaravelAvailable()) {
     try {
-      return await fetchLaravel(`/umkm?koridor_id=${koridorId}`);
+      return await fetchLaravel(`/umkm?koridor_id=${encodeURIComponent(koridorId)}&per_page=100`);
     } catch {
       // laravelClient sudah mencatat sekali; lanjut ke fallback.
     }
@@ -65,6 +65,7 @@ export async function getUmkmByKoridor(koridorId) {
     return umkms.filter((u) => u.koridor_id === Number(koridorId));
   }
   return safeFirestore(async () => {
+    const { db, getDocs, collection, query, where } = await loadFirestore();
     const snap = await getDocs(query(collection(db, "umkms"), where("koridor_id", "==", Number(koridorId))));
     return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
   }, () => umkms.filter((u) => u.koridor_id === Number(koridorId)));
@@ -84,6 +85,7 @@ export async function getBfestCalendar() {
     return bfestEvents;
   }
   return safeFirestore(async () => {
+    const { db, getDocs, collection, query, orderBy } = await loadFirestore();
     const snap = await getDocs(query(collection(db, "bfest"), orderBy("date")));
     return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
   }, () => bfestEvents);
@@ -115,6 +117,7 @@ export async function getFestivalsByMonth(yearMonth, category) {
   const inMonth = (e) => e.date?.startsWith(yearMonth) && (!category || e.category === category);
   return safeFirestore(
     async () => {
+      const { db, getDocs, collection, query, orderBy } = await loadFirestore();
       const snap = await getDocs(query(collection(db, "bfest"), orderBy("date")));
       return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() })).filter(inMonth);
     },

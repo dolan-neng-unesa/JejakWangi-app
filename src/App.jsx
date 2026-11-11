@@ -1,27 +1,50 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import { GeofenceProvider } from "./context/GeofenceContext";
 import { useGeofence } from "./hooks/useGeofence";
 import GeofenceAlert from "./components/geofencing/GeofenceAlert";
+import ErrorBoundary from "./components/global/ErrorBoundary";
 
+// Jalur pertama (splash -> onboarding) dan 404 dimuat langsung; sisanya dipecah per halaman
+// supaya unduhan awal kecil — peta (Leaflet) & Firebase hanya diunduh saat halamannya dibuka.
 import SplashScreen from "./pages/SplashScreen";
 import OnboardingCarousel from "./pages/OnboardingCarousel";
-import LoginPage from "./pages/LoginPage";
-import HomePage from "./pages/HomePage";
-import KoridorListPage from "./pages/KoridorListPage";
-import KoridorDetailPage from "./pages/KoridorDetailPage";
-import MapPage from "./pages/MapPage";
-import RouteListPage from "./pages/RouteListPage";
-import SmartGreenRoutePage from "./pages/SmartGreenRoutePage";
-import RouteDetailPage from "./pages/RouteDetailPage";
-import NavigationPage from "./pages/NavigationPage";
-import MoodTrackerPage from "./pages/MoodTrackerPage";
-import MoodHistoryPage from "./pages/MoodHistoryPage";
-import SoundscapeTherapyPage from "./pages/SoundscapeTherapyPage";
-import GeofencingPage from "./pages/GeofencingPage";
-import BwiFestPage from "./pages/BwiFestPage";
-import UmkmPage from "./pages/UmkmPage";
 import NotFoundPage from "./pages/NotFoundPage";
+
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const HomePage = lazy(() => import("./pages/HomePage"));
+const KoridorListPage = lazy(() => import("./pages/KoridorListPage"));
+const KoridorDetailPage = lazy(() => import("./pages/KoridorDetailPage"));
+const MapPage = lazy(() => import("./pages/MapPage"));
+const RouteListPage = lazy(() => import("./pages/RouteListPage"));
+const SmartGreenRoutePage = lazy(() => import("./pages/SmartGreenRoutePage"));
+const RouteDetailPage = lazy(() => import("./pages/RouteDetailPage"));
+const NavigationPage = lazy(() => import("./pages/NavigationPage"));
+const MoodTrackerPage = lazy(() => import("./pages/MoodTrackerPage"));
+const MoodHistoryPage = lazy(() => import("./pages/MoodHistoryPage"));
+const SoundscapeTherapyPage = lazy(() => import("./pages/SoundscapeTherapyPage"));
+const GeofencingPage = lazy(() => import("./pages/GeofencingPage"));
+const BwiFestPage = lazy(() => import("./pages/BwiFestPage"));
+const UmkmPage = lazy(() => import("./pages/UmkmPage"));
+
+function PageLoading() {
+  return (
+    <div className="min-h-dvh flex items-center justify-center bg-sand-50" role="status" aria-label="Memuat halaman">
+      <span className="h-8 w-8 rounded-full border-2 border-canopy-700 border-t-transparent animate-spin" />
+    </div>
+  );
+}
+
+// Dipasang di dalam BrowserRouter agar bisa mereset ErrorBoundary tiap pindah halaman.
+function RoutedBoundary({ children }) {
+  const { pathname } = useLocation();
+  return (
+    <ErrorBoundary resetKey={pathname}>
+      <Suspense fallback={<PageLoading />}>{children}</Suspense>
+    </ErrorBoundary>
+  );
+}
 
 // Overlay notifikasi "Zona Aktif" — dipasang sekali, berlaku di seluruh app.
 function GeofenceOverlay() {
@@ -36,6 +59,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <GeofenceProvider>
+        <RoutedBoundary>
         <Routes>
           <Route path="/" element={<SplashScreen />} />
           <Route path="/onboarding" element={<OnboardingCarousel />} />
@@ -62,6 +86,7 @@ export default function App() {
 
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
+        </RoutedBoundary>
         <GeofenceOverlay />
       </GeofenceProvider>
     </BrowserRouter>

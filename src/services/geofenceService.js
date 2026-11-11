@@ -1,8 +1,7 @@
-import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { USE_MOCK, USE_FIRESTORE_FALLBACK, delay } from "./config";
 import { fetchLaravel, isLaravelAvailable } from "./laravelClient";
 import { withTimeout } from "./withTimeout";
-import { db } from "./firebaseClient";
+import { loadFirestore } from "./firebaseClient";
 import { geofences, soundscapes } from "../data/mockContent";
 
 /**
@@ -28,6 +27,7 @@ export async function getActiveGeofences() {
     return geofences.filter((g) => g.is_active);
   }
   try {
+    const { db, getDocs, collection, query, where } = await loadFirestore();
     const snap = await withTimeout(getDocs(query(collection(db, "geofences"), where("is_active", "==", true))));
     return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
   } catch {
@@ -49,6 +49,7 @@ export async function getSoundscape(soundscapeId) {
     return soundscapes.find((s) => s.id === soundscapeId) ?? null;
   }
   try {
+    const { db, getDoc, doc } = await loadFirestore();
     const snap = await withTimeout(getDoc(doc(db, "soundscapes", String(soundscapeId))));
     return snap.exists() ? { id: Number(snap.id), ...snap.data() } : null;
   } catch {
