@@ -1,34 +1,14 @@
-import { USE_MOCK, USE_FIRESTORE_FALLBACK, delay } from "./config";
+import { delay } from "./config";
 import { fetchLaravel, isLaravelAvailable } from "./laravelClient";
-import { withTimeout } from "./withTimeout";
-import { loadFirestore } from "./firebaseClient";
 import { umkms, bfestEvents } from "../data/mockContent";
 
 /**
- * UMKM & Festival — sesuai arahan mentor, backend untuk dua fitur ini
- * pakai Laravel (lihat svarga-backend/), bukan Firestore. Urutan sumber data:
- *   1. Laravel API (kalau VITE_LARAVEL_API_URL diisi)
- *   2. Firestore (kalau kredensial Firebase ada tapi Laravel tidak/gagal)
- *   3. Data mock lokal (fallback terakhir)
- * Fallback otomatis (bukan cuma saat kosong, tapi juga saat request Laravel
- * gagal — mis. server belum dijalankan) supaya halaman tidak blank/error
- * kalau backend Laravel sedang tidak aktif.
+ * UMKM & Festival — data dari backend Laravel (lihat svarga-backend/).
+ * Urutan sumber data:
+ *   1. Laravel API (kalau VITE_LARAVEL_API_URL diisi dan server terjangkau)
+ *   2. Data mock lokal (fallback bila Laravel tidak dikonfigurasi / gagal)
+ * Fallback otomatis supaya halaman tidak blank/error kalau backend sedang tidak aktif.
  */
-
-// Firestore bisa menolak baca (rules) atau gagal jaringan — jatuhkan ke mock
-// alih-alih membiarkan promise ditolak (galat tak tertangkap di konsol).
-async function safeFirestore(read, fallback) {
-  if (!USE_FIRESTORE_FALLBACK) {
-    await delay();
-    return fallback();
-  }
-  try {
-    return await withTimeout(read());
-  } catch {
-    await delay();
-    return fallback();
-  }
-}
 
 /** Seluruh UMKM aktif (dipakai peta untuk menampilkan marker; field latitude/longitude bisa null). */
 export async function getUmkmList() {
@@ -40,15 +20,8 @@ export async function getUmkmList() {
     }
   }
 
-  if (USE_MOCK) {
-    await delay();
-    return umkms.filter((u) => u.is_active);
-  }
-  return safeFirestore(async () => {
-    const { db, getDocs, collection } = await loadFirestore();
-    const snap = await getDocs(collection(db, "umkms"));
-    return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
-  }, () => umkms.filter((u) => u.is_active));
+  await delay();
+  return umkms.filter((u) => u.is_active);
 }
 
 export async function getUmkmByKoridor(koridorId) {
@@ -60,15 +33,8 @@ export async function getUmkmByKoridor(koridorId) {
     }
   }
 
-  if (USE_MOCK) {
-    await delay();
-    return umkms.filter((u) => u.koridor_id === Number(koridorId));
-  }
-  return safeFirestore(async () => {
-    const { db, getDocs, collection, query, where } = await loadFirestore();
-    const snap = await getDocs(query(collection(db, "umkms"), where("koridor_id", "==", Number(koridorId))));
-    return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
-  }, () => umkms.filter((u) => u.koridor_id === Number(koridorId)));
+  await delay();
+  return umkms.filter((u) => u.koridor_id === Number(koridorId));
 }
 
 export async function getBfestCalendar() {
@@ -80,15 +46,8 @@ export async function getBfestCalendar() {
     }
   }
 
-  if (USE_MOCK) {
-    await delay();
-    return bfestEvents;
-  }
-  return safeFirestore(async () => {
-    const { db, getDocs, collection, query, orderBy } = await loadFirestore();
-    const snap = await getDocs(query(collection(db, "bfest"), orderBy("date")));
-    return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
-  }, () => bfestEvents);
+  await delay();
+  return bfestEvents;
 }
 
 /**
@@ -109,18 +68,6 @@ export async function getFestivalsByMonth(yearMonth, category) {
     }
   }
 
-  if (USE_MOCK) {
-    await delay();
-    return bfestEvents.filter((e) => e.date.startsWith(yearMonth) && (!category || e.category === category));
-  }
-
-  const inMonth = (e) => e.date?.startsWith(yearMonth) && (!category || e.category === category);
-  return safeFirestore(
-    async () => {
-      const { db, getDocs, collection, query, orderBy } = await loadFirestore();
-      const snap = await getDocs(query(collection(db, "bfest"), orderBy("date")));
-      return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() })).filter(inMonth);
-    },
-    () => bfestEvents.filter(inMonth)
-  );
+  await delay();
+  return bfestEvents.filter((e) => e.date.startsWith(yearMonth) && (!category || e.category === category));
 }
