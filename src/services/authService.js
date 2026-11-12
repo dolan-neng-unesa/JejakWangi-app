@@ -1,44 +1,17 @@
-import {
-  getAuth,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
-  FacebookAuthProvider,
-  signOut,
-  updateProfile,
-} from "firebase/auth";
-import { hasFirebaseCredentials, getFirebaseApp } from "./firebaseClient";
-import { USE_MOCK, delay, USE_LARAVEL_API } from "./config";
+import { delay, USE_LARAVEL_API } from "./config";
 import { apiRequest, ApiError } from "./laravelClient";
 import { AUTH_EVENT, readSession, writeSession, updateSessionUser, clearSession, getToken } from "./sessionStore";
-
-let authInstance = null;
-let authPromise = null;
-
-/** Instance Firebase Auth, dibuat saat pertama dibutuhkan; null bila kredensial belum diisi. */
-function getAuthInstance() {
-  if (!hasFirebaseCredentials) return Promise.resolve(null);
-  authPromise ??= getFirebaseApp().then((app) => (authInstance = getAuth(app)));
-  return authPromise;
-}
 
 /** Kata sandi minimal — harus sama dengan aturan backend (AuthController). */
 export const MIN_PASSWORD_LENGTH = 8;
 
 /**
- * Email/kata sandi lewat Laravel Sanctum (token-based) — menggantikan Firebase
- * Auth untuk metode ini sesuai arahan mentor. Login sosial (Google/Facebook)
- * TETAP lewat Firebase/mock di bawah karena OAuth popup butuh provider yang
- * belum diatur di backend Laravel; hanya email/password yang dipindah.
- * Urutan sumber tetap sama seperti fitur lain: Laravel -> Firebase -> mock.
- *
- * Sesi aktif bisa datang dari tiga sumber sekaligus (Laravel, mock, Firebase);
- * subscribeToAuthChanges() menggabungkan ketiganya — lihat di bawah.
+ * Autentikasi email/kata sandi lewat Laravel Sanctum (token-based).
+ * Kalau VITE_LARAVEL_API_URL kosong (mengembangkan UI tanpa backend), login
+ * memakai sesi mock di localStorage supaya alur halaman tetap bisa dicoba.
  */
 
-/** Bentuk objek user disamakan dengan Firebase (uid/email/displayName) supaya UI pemanggil tidak perlu tahu bedanya. */
+/** Bentuk objek user untuk UI (uid/email/displayName). */
 function toAppUser(laravelUser) {
   return { uid: `laravel-${laravelUser.id}`, email: laravelUser.email, displayName: laravelUser.name };
 }
@@ -61,7 +34,7 @@ async function laravelAuthRequest(path, body) {
   }
 }
 
-// --- Mode mock: sesi disimpan di localStorage, meniru bentuk objek user Firebase ---
+// --- Mode mock (tanpa backend): sesi disimpan di localStorage ---
 const MOCK_USER_KEY = "svarga_mock_user";
 
 function readMockUser() {
@@ -83,22 +56,6 @@ function writeMockUser(user) {
   window.dispatchEvent(new Event(AUTH_EVENT));
 }
 
-function friendlyAuthError(err) {
-  const code = err?.code ?? "";
-  const map = {
-    "auth/invalid-email": "Format email tidak valid.",
-    "auth/user-not-found": "Akun dengan email ini tidak ditemukan.",
-    "auth/wrong-password": "Kata sandi salah.",
-    "auth/invalid-credential": "Email atau kata sandi salah.",
-    "auth/email-already-in-use": "Email ini sudah terdaftar. Coba masuk, bukan daftar.",
-    "auth/weak-password": `Kata sandi minimal ${MIN_PASSWORD_LENGTH} karakter.`,
-    "auth/popup-closed-by-user": "Jendela login ditutup sebelum selesai.",
-    "auth/network-request-failed": "Gagal terhubung ke server. Cek koneksi internet.",
-    "auth/too-many-requests": "Terlalu banyak percobaan. Coba lagi beberapa saat lagi.",
-  };
-  return map[code] ?? err?.message ?? "Terjadi kesalahan saat autentikasi.";
-}
-
 /** Masuk dengan email & kata sandi. */
 export async function signInWithEmail(email, password) {
   if (USE_LARAVEL_API) {
@@ -106,19 +63,12 @@ export async function signInWithEmail(email, password) {
     writeSession(user, token, expiresAt);
     return toAppUser(user);
   }
-  if (USE_MOCK) {
-    await delay(400);
-    if (!email || !password) throw new Error("Email dan kata sandi wajib diisi.");
-    const user = { uid: `mock-${email}`, email, displayName: email.split("@")[0] };
-    writeMockUser(user);
-    return user;
-  }
-  try {
-    const cred = await signInWithEmailAndPassword(await getAuthInstance(), email, password);
-    return cred.user;
-  } catch (err) {
-    throw new Error(friendlyAuthError(err));
-  }
+  // Backend belum dikonfigurasi: sesi mock lokal.
+  await delay(400);
+  if (!email || !password) throw new Error("Email dan kata sandi wajib diisi.");
+  const user = { uid: `mock-${email}`, email, displayName: email.split("@")[0] };
+  writeMockUser(user);
+  return user;
 }
 
 /** Daftar akun baru dengan email & kata sandi. */
@@ -135,58 +85,44 @@ export async function registerWithEmail(email, password, displayName) {
     writeSession(user, token, expiresAt);
     return toAppUser(user);
   }
-  if (USE_MOCK) {
-    await delay(400);
-    if (!email || !password) throw new Error("Email dan kata sandi wajib diisi.");
-    const user = { uid: `mock-${email}`, email, displayName: displayName || email.split("@")[0] };
-    writeMockUser(user);
-    return user;
-  }
-  try {
-    const cred = await createUserWithEmailAndPassword(await getAuthInstance(), email, password);
-    if (displayName) await updateProfile(cred.user, { displayName });
-    return cred.user;
-  } catch (err) {
-    throw new Error(friendlyAuthError(err));
-  }
-}
-
-/** Masuk dengan akun Google (popup). Perlu diaktifkan di Firebase Console → Authentication → Sign-in method. */
-export async function signInWithGoogle() {
-  if (USE_MOCK) {
-    await delay(400);
-    const user = { uid: "mock-google", email: "tamu@svarga.app", displayName: "Tamu (Google)" };
-    writeMockUser(user);
-    return user;
-  }
-  try {
-    const cred = await signInWithPopup(await getAuthInstance(), new GoogleAuthProvider());
-    return cred.user;
-  } catch (err) {
-    throw new Error(friendlyAuthError(err));
-  }
+  // Backend belum dikonfigurasi: sesi mock lokal.
+  await delay(400);
+  if (!email || !password) throw new Error("Email dan kata sandi wajib diisi.");
+  const user = { uid: `mock-${email}`, email, displayName: displayName || email.split("@")[0] };
+  writeMockUser(user);
+  return user;
 }
 
 /**
- * Masuk dengan akun Facebook (popup). Selain diaktifkan di Firebase Console,
- * metode ini juga butuh App ID dari Meta for Developers — lihat catatan di README.
+ * Penyedia login sosial yang aktif di backend (satu sumber: .env backend), mis.
+ * { google: { client_id }, facebook: null }. Galat jaringan TIDAK boleh merusak halaman
+ * login — hasilnya cukup "tidak ada penyedia" sehingga tombol sosial tidak ditampilkan.
  */
-export async function signInWithFacebook() {
-  if (USE_MOCK) {
-    await delay(400);
-    const user = { uid: "mock-facebook", email: "tamu@svarga.app", displayName: "Tamu (Facebook)" };
-    writeMockUser(user);
-    return user;
-  }
-  try {
-    const cred = await signInWithPopup(await getAuthInstance(), new FacebookAuthProvider());
-    return cred.user;
-  } catch (err) {
-    throw new Error(friendlyAuthError(err));
-  }
+const NO_PROVIDERS = { google: null, facebook: null };
+let providersPromise = null;
+export function fetchAuthProviders() {
+  if (!USE_LARAVEL_API) return Promise.resolve(NO_PROVIDERS);
+  providersPromise ??= apiRequest("/auth/providers", { breaker: false, timeoutMs: 8000 })
+    .then((json) => ({ ...NO_PROVIDERS, ...(json?.data ?? json ?? {}) }))
+    .catch(() => {
+      providersPromise = null; // coba lagi di kunjungan berikutnya
+      return NO_PROVIDERS;
+    });
+  return providersPromise;
 }
 
-/** Keluar dari SEMUA sumber sesi (Laravel, mock, Firebase) — pengguna bisa saja punya lebih dari satu aktif. */
+/**
+ * Masuk/daftar lewat Google (token = ID token) atau Facebook (token = access token).
+ * Backend memverifikasi token ke penyedia lalu membalas format yang sama dengan login email.
+ */
+export async function signInWithSocial(provider, token) {
+  if (!USE_LARAVEL_API) throw new Error("Login sosial membutuhkan koneksi ke server.");
+  const { user, token: accessToken, expires_at: expiresAt } = await laravelAuthRequest("/auth/social", { provider, token });
+  writeSession(user, accessToken, expiresAt);
+  return toAppUser(user);
+}
+
+/** Keluar: hapus sesi Laravel (dan sesi mock bila ada). */
 export async function signOutUser() {
   if (readSession()) {
     try {
@@ -197,8 +133,6 @@ export async function signOutUser() {
     clearSession();
   }
   if (readMockUser()) writeMockUser(null);
-  const firebaseAuth = await getAuthInstance();
-  if (firebaseAuth?.currentUser) await signOut(firebaseAuth);
 }
 
 /** Ambil access token Sanctum yang sedang aktif, untuk dipakai request otentikasi lain (mis. submit mood). */
@@ -231,20 +165,16 @@ export function validateLaravelSession() {
   return validating;
 }
 
-/** Pengguna aktif saat ini dari sumber mana pun: sesi Laravel > mock > Firebase. */
+/** Pengguna aktif saat ini: sesi Laravel, atau sesi mock bila backend tidak dikonfigurasi. */
 function currentUser() {
   const session = USE_LARAVEL_API ? readSession() : null;
   if (session) return toAppUser(session.user);
-  const mock = USE_MOCK ? readMockUser() : null;
-  if (mock) return mock;
-  return authInstance?.currentUser ?? null;
+  return USE_LARAVEL_API ? null : readMockUser();
 }
 
 /**
  * Subscribe ke perubahan status login. Mengembalikan fungsi unsubscribe.
- * Sebelumnya, saat VITE_LARAVEL_API_URL terisi, hanya sesi Laravel yang diamati sehingga
- * login Google/Facebook/mock tidak pernah terdeteksi. Sekarang ketiga sumber digabung,
- * dan token Laravel yang tersimpan divalidasi ke server sekali di awal.
+ * Token Laravel yang tersimpan divalidasi ke server sekali di awal.
  */
 export function subscribeToAuthChanges(callback) {
   let last;
@@ -259,18 +189,11 @@ export function subscribeToAuthChanges(callback) {
   emit();
   window.addEventListener(AUTH_EVENT, emit);
   window.addEventListener("storage", emit); // sinkron antar-tab
-  let unsubscribeFirebase = null;
-  let disposed = false;
-  getAuthInstance().then((firebaseAuth) => {
-    if (firebaseAuth && !disposed) unsubscribeFirebase = onAuthStateChanged(firebaseAuth, emit);
-  });
 
   validateLaravelSession();
 
   return () => {
-    disposed = true;
     window.removeEventListener(AUTH_EVENT, emit);
     window.removeEventListener("storage", emit);
-    unsubscribeFirebase?.();
   };
 }

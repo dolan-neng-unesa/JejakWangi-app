@@ -1,16 +1,13 @@
-import { USE_MOCK, USE_FIRESTORE_FALLBACK, delay } from "./config";
+import { delay } from "./config";
 import { fetchLaravel, isLaravelAvailable } from "./laravelClient";
-import { withTimeout } from "./withTimeout";
-import { loadFirestore } from "./firebaseClient";
 import { geofences, soundscapes } from "../data/mockContent";
 
 /**
- * Geofencing & Soundscape Therapy — sesuai arahan mentor, backend dipindah
- * ke Laravel (lihat GeofenceController & SoundscapeController). Urutan
- * sumber data sama seperti fitur lain: Laravel -> Firestore -> mock.
- * Pendeteksian zona (Haversine, findActiveZone di bawah) TETAP berjalan
- * client-side sesuai Batasan 4.1 proposal — hanya daftar zona yang
- * sumbernya berpindah.
+ * Geofencing & Soundscape Therapy — data dari backend Laravel (lihat
+ * GeofenceController & SoundscapeController). Urutan sumber data:
+ * Laravel -> mock. Pendeteksian zona (Haversine, findActiveZone di bawah)
+ * TETAP berjalan client-side sesuai Batasan 4.1 proposal — hanya daftar
+ * zona yang diambil dari server.
  */
 /** Ambil seluruh zona geofencing yang aktif. */
 export async function getActiveGeofences() {
@@ -22,17 +19,8 @@ export async function getActiveGeofences() {
     }
   }
 
-  if (USE_MOCK || !USE_FIRESTORE_FALLBACK) {
-    await delay();
-    return geofences.filter((g) => g.is_active);
-  }
-  try {
-    const { db, getDocs, collection, query, where } = await loadFirestore();
-    const snap = await withTimeout(getDocs(query(collection(db, "geofences"), where("is_active", "==", true))));
-    return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
-  } catch {
-    return geofences.filter((g) => g.is_active); // rules Firestore menolak / jaringan gagal
-  }
+  await delay();
+  return geofences.filter((g) => g.is_active);
 }
 
 export async function getSoundscape(soundscapeId) {
@@ -44,23 +32,14 @@ export async function getSoundscape(soundscapeId) {
     }
   }
 
-  if (USE_MOCK || !USE_FIRESTORE_FALLBACK) {
-    await delay(150);
-    return soundscapes.find((s) => s.id === soundscapeId) ?? null;
-  }
-  try {
-    const { db, getDoc, doc } = await loadFirestore();
-    const snap = await withTimeout(getDoc(doc(db, "soundscapes", String(soundscapeId))));
-    return snap.exists() ? { id: Number(snap.id), ...snap.data() } : null;
-  } catch {
-    return soundscapes.find((s) => s.id === soundscapeId) ?? null;
-  }
+  await delay(150);
+  return soundscapes.find((s) => s.id === soundscapeId) ?? null;
 }
 
 /**
  * Haversine formula — jarak antara dua titik koordinat dalam meter.
  * Dipakai murni di client (lihat Batasan 4.1: geofencing berjalan client-side,
- * hanya aktif saat halaman PWA foreground). Tidak bergantung pada Firestore.
+ * hanya aktif saat halaman PWA foreground). Tidak bergantung pada backend.
  */
 export function distanceMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;

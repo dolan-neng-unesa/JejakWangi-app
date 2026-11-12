@@ -1,5 +1,5 @@
 // Data contoh (mock) — merepresentasikan baris tabel `green_space` & `koridor`.
-// Dipakai sementara oleh services/* selagi backend/Firebase asli belum tersambung.
+// Dipakai sementara oleh services/* selagi backend Laravel belum tersambung / tidak terjangkau.
 
 import thumbSritanjung from "../assets/pages/koridor/thumb-sritanjung.png";
 import thumbKalilo from "../assets/pages/koridor/thumb-kalilo.png";
@@ -60,6 +60,52 @@ export const koridors = [
     distance_meter: 400,
     estimate_minutes: 6,
     shade_score: 82,
+    // Estimasi kontribusi lingkungan koridor (kg/hari) — angka perkiraan, ganti dengan hasil kajian.
+    oxygen_kg_day: 11.7,
+    co2_reduced_kg_day: 16,
+    // Masukan neraca karbon (lib/carbonBalance.js). Angka di bawah CONTOH — ganti dengan hasil survei.
+    // oxygen_kg_day & co2_reduced_kg_day di atas dihitung ulang dari sini; keduanya hanya cadangan.
+    carbon_inputs: {
+      "pohon": [
+        {
+          "jenis": "mahoni",
+          "jumlah": 18
+        },
+        {
+          "jenis": "tanjung",
+          "jumlah": 12
+        },
+        {
+          "jenis": "angsana",
+          "jumlah": 10
+        }
+      ],
+      "kendaraanPerHari": {
+        "motor": 1200,
+        "mobil": 150
+      },
+      "toko": [
+        {
+          "nama": "UMKM A",
+          "unitAC": 1,
+          "kWPerUnit": 0.8,
+          "jamOperasi": 10,
+          "faktorBeban": 0.7
+        },
+        {
+          "nama": "UMKM B",
+          "unitAC": 1,
+          "kWPerUnit": 0.8,
+          "jamOperasi": 10,
+          "faktorBeban": 0.7
+        }
+      ],
+      "sumberData": {
+        "kendaraan": "ILUSTRASI",
+        "pohon": "ILUSTRASI",
+        "ac": "ILUSTRASI"
+      }
+    },
     condition_title: "Kondisi Koridor Terpilih",
     condition_desc:
       "Koridor ini memiliki cakupan pohon yang rimbun dan kualitas udara paling bersih di pusat kota. Dilengkapi infrastruktur pedestrian teduh.",
@@ -88,7 +134,60 @@ export const koridors = [
     status: "rencana",
     distance_meter: 620,
     estimate_minutes: 9,
+    // Jalur koridor [lat, lng] — koordinat perkiraan, ganti dengan hasil survei / gambar di mode edit peta (/map?edit=1).
+    path: [
+      [-8.2108, 114.3702],
+      [-8.2102, 114.3724],
+      [-8.2095, 114.3742],
+      [-8.209, 114.3758],
+    ],
     shade_score: 64,
+    // Estimasi kontribusi lingkungan koridor (kg/hari) — angka perkiraan, ganti dengan hasil kajian.
+    oxygen_kg_day: 9.1,
+    co2_reduced_kg_day: 12.5,
+    // Masukan neraca karbon (lib/carbonBalance.js). Angka di bawah CONTOH — ganti dengan hasil survei.
+    // oxygen_kg_day & co2_reduced_kg_day di atas dihitung ulang dari sini; keduanya hanya cadangan.
+    carbon_inputs: {
+      "pohon": [
+        {
+          "jenis": "mahoni",
+          "jumlah": 14
+        },
+        {
+          "jenis": "angsana",
+          "jumlah": 20
+        },
+        {
+          "jenis": "tanjung",
+          "jumlah": 6
+        }
+      ],
+      "kendaraanPerHari": {
+        "motor": 1800,
+        "mobil": 260
+      },
+      "toko": [
+        {
+          "nama": "Kafe",
+          "unitAC": 2,
+          "kWPerUnit": 0.8,
+          "jamOperasi": 12,
+          "faktorBeban": 0.7
+        },
+        {
+          "nama": "UMKM",
+          "unitAC": 1,
+          "kWPerUnit": 0.75,
+          "jamOperasi": 10,
+          "faktorBeban": 0.7
+        }
+      ],
+      "sumberData": {
+        "kendaraan": "ILUSTRASI",
+        "pohon": "ILUSTRASI",
+        "ac": "ILUSTRASI"
+      }
+    },
     condition_title: "Kondisi Koridor Terpilih",
     condition_desc:
       "Koridor menyusuri tepi sungai dengan pepohonan sedang. Ramai dikunjungi sore hari untuk berfoto dan bersantai.",
@@ -117,7 +216,51 @@ export const koridors = [
     status: "rencana",
     distance_meter: 510,
     estimate_minutes: 8,
+    // Jalur koridor [lat, lng] — koordinat perkiraan, ganti dengan hasil survei / gambar di mode edit peta (/map?edit=1).
+    path: [
+      [-8.2228, 114.3612],
+      [-8.2239, 114.363],
+      [-8.2252, 114.3646],
+      [-8.2262, 114.366],
+    ],
     shade_score: 41,
+    // Estimasi kontribusi lingkungan koridor (kg/hari) — angka perkiraan, ganti dengan hasil kajian.
+    oxygen_kg_day: 3.3,
+    co2_reduced_kg_day: 4.5,
+    // Masukan neraca karbon (lib/carbonBalance.js). Angka di bawah CONTOH — ganti dengan hasil survei.
+    // oxygen_kg_day & co2_reduced_kg_day di atas dihitung ulang dari sini; keduanya hanya cadangan.
+    carbon_inputs: {
+      "pohon": [
+        {
+          "jenis": "angsana",
+          "jumlah": 15
+        },
+        {
+          "jenis": "mahoni",
+          "jumlah": 5
+        }
+      ],
+      "kendaraanPerHari": {
+        "motor": 4200,
+        "mobil": 900,
+        "bus": 40,
+        "truk": 25
+      },
+      "toko": [
+        {
+          "nama": "Minimarket",
+          "unitAC": 3,
+          "kWPerUnit": 0.9,
+          "jamOperasi": 16,
+          "faktorBeban": 0.8
+        }
+      ],
+      "sumberData": {
+        "kendaraan": "ILUSTRASI",
+        "pohon": "ILUSTRASI",
+        "ac": "ILUSTRASI"
+      }
+    },
     condition_title: "Kondisi Koridor Terpilih",
     condition_desc:
       "Koridor padat lalu lintas dengan pohon peneduh terbatas. Disarankan berjalan pada jam bukan puncak.",
@@ -146,7 +289,53 @@ export const koridors = [
     status: "rencana",
     distance_meter: 350,
     estimate_minutes: 5,
+    // Jalur koridor [lat, lng] — koordinat perkiraan, ganti dengan hasil survei / gambar di mode edit peta (/map?edit=1).
+    path: [
+      [-8.2175, 114.3675],
+      [-8.219, 114.3662],
+      [-8.2206, 114.365],
+      [-8.222, 114.3638],
+    ],
     shade_score: 79,
+    // Estimasi kontribusi lingkungan koridor (kg/hari) — angka perkiraan, ganti dengan hasil kajian.
+    oxygen_kg_day: 16.2,
+    co2_reduced_kg_day: 22.3,
+    // Masukan neraca karbon (lib/carbonBalance.js). Angka di bawah CONTOH — ganti dengan hasil survei.
+    // oxygen_kg_day & co2_reduced_kg_day di atas dihitung ulang dari sini; keduanya hanya cadangan.
+    carbon_inputs: {
+      "pohon": [
+        {
+          "jenis": "mahoni",
+          "jumlah": 25
+        },
+        {
+          "jenis": "tanjung",
+          "jumlah": 14
+        },
+        {
+          "jenis": "flamboyan",
+          "jumlah": 6
+        }
+      ],
+      "kendaraanPerHari": {
+        "motor": 900,
+        "mobil": 120
+      },
+      "toko": [
+        {
+          "nama": "Kantin",
+          "unitAC": 1,
+          "kWPerUnit": 0.75,
+          "jamOperasi": 8,
+          "faktorBeban": 0.6
+        }
+      ],
+      "sumberData": {
+        "kendaraan": "ILUSTRASI",
+        "pohon": "ILUSTRASI",
+        "ac": "ILUSTRASI"
+      }
+    },
     condition_title: "Kondisi Koridor Terpilih",
     condition_desc:
       "Kawasan taman kota dengan kanopi pohon luas dan banyak pilihan kuliner di sekelilingnya.",
@@ -175,7 +364,57 @@ export const koridors = [
     status: "rencana",
     distance_meter: 480,
     estimate_minutes: 7,
+    // Jalur koridor [lat, lng] — koordinat perkiraan, ganti dengan hasil survei / gambar di mode edit peta (/map?edit=1).
+    path: [
+      [-8.216, 114.3742],
+      [-8.2169, 114.3754],
+      [-8.2178, 114.3765],
+      [-8.2187, 114.3776],
+    ],
     shade_score: 22,
+    // Estimasi kontribusi lingkungan koridor (kg/hari) — angka perkiraan, ganti dengan hasil kajian.
+    oxygen_kg_day: 0.3,
+    co2_reduced_kg_day: 0.5,
+    // Masukan neraca karbon (lib/carbonBalance.js). Angka di bawah CONTOH — ganti dengan hasil survei.
+    // oxygen_kg_day & co2_reduced_kg_day di atas dihitung ulang dari sini; keduanya hanya cadangan.
+    carbon_inputs: {
+      "pohon": [
+        {
+          "jenis": "angsana",
+          "jumlah": 6
+        },
+        {
+          "jenis": "tanjung",
+          "jumlah": 3
+        }
+      ],
+      "kendaraanPerHari": {
+        "motor": 3800,
+        "mobil": 700,
+        "truk": 30
+      },
+      "toko": [
+        {
+          "nama": "Toko A",
+          "unitAC": 2,
+          "kWPerUnit": 0.8,
+          "jamOperasi": 10,
+          "faktorBeban": 0.7
+        },
+        {
+          "nama": "Toko B",
+          "unitAC": 2,
+          "kWPerUnit": 0.8,
+          "jamOperasi": 10,
+          "faktorBeban": 0.7
+        }
+      ],
+      "sumberData": {
+        "kendaraan": "ILUSTRASI",
+        "pohon": "ILUSTRASI",
+        "ac": "ILUSTRASI"
+      }
+    },
     condition_title: "Kondisi Koridor Terpilih",
     condition_desc:
       "Kawasan padat bangunan dengan sedikit vegetasi. Kualitas udara perlu dipantau lebih ketat pada jam sibuk.",
@@ -204,7 +443,55 @@ export const koridors = [
     status: "rencana",
     distance_meter: 610,
     estimate_minutes: 9,
+    // Jalur koridor [lat, lng] — koordinat perkiraan, ganti dengan hasil survei / gambar di mode edit peta (/map?edit=1).
+    path: [
+      [-8.2142, 114.3812],
+      [-8.2135, 114.3828],
+      [-8.2128, 114.3845],
+      [-8.2122, 114.3862],
+    ],
     shade_score: 60,
+    // Estimasi kontribusi lingkungan koridor (kg/hari) — angka perkiraan, ganti dengan hasil kajian.
+    oxygen_kg_day: 5.7,
+    co2_reduced_kg_day: 7.8,
+    // Masukan neraca karbon (lib/carbonBalance.js). Angka di bawah CONTOH — ganti dengan hasil survei.
+    // oxygen_kg_day & co2_reduced_kg_day di atas dihitung ulang dari sini; keduanya hanya cadangan.
+    carbon_inputs: {
+      "pohon": [
+        {
+          "jenis": "angsana",
+          "jumlah": 18
+        },
+        {
+          "jenis": "mahoni",
+          "jumlah": 8
+        },
+        {
+          "jenis": "tanjung",
+          "jumlah": 8
+        }
+      ],
+      "kendaraanPerHari": {
+        "motor": 1500,
+        "mobil": 300,
+        "bus": 10,
+        "truk": 60
+      },
+      "toko": [
+        {
+          "nama": "Warung",
+          "unitAC": 1,
+          "kWPerUnit": 0.75,
+          "jamOperasi": 8,
+          "faktorBeban": 0.6
+        }
+      ],
+      "sumberData": {
+        "kendaraan": "ILUSTRASI",
+        "pohon": "ILUSTRASI",
+        "ac": "ILUSTRASI"
+      }
+    },
     condition_title: "Kondisi Koridor Terpilih",
     condition_desc:
       "Koridor pesisir dengan angin laut sejuk. Vegetasi peneduh sedang, cocok untuk jalan sore.",

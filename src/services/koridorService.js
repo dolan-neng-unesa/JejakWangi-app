@@ -1,18 +1,12 @@
-import { USE_MOCK, USE_FIRESTORE_FALLBACK, delay } from "./config";
+import { delay } from "./config";
 import { fetchLaravel, isLaravelAvailable } from "./laravelClient";
-import { loadFirestore } from "./firebaseClient";
 import { greenSpaces, koridors } from "../data/mockGreenSpaces";
-import { getLatestReading } from "./sensorService";
-import { withTimeout } from "./withTimeout";
+import { terapkanNeracaKarbon } from "../lib/carbonBalance";
 
 /**
- * Green space & koridor. Urutan sumber: Laravel -> (Firestore, opsional) -> mock.
- *
- * Koleksi Firestore `green_space`/`koridor` belum pernah diisi, dan rules
- * project Firebase bisa saja menolak baca ("Missing or insufficient
- * permissions"). Karena itu Firestore dijaga try/catch dan dianggap gagal
- * kalau kosong — halaman selalu mendapat data (mock) alih-alih promise
- * yang ditolak dan galat di konsol.
+ * Green space & koridor. Urutan sumber: Laravel -> mock.
+ * Halaman selalu mendapat data (mock) alih-alih promise yang ditolak
+ * kalau backend belum dijalankan.
  */
 
 async function fromLaravel(path) {
@@ -24,27 +18,10 @@ async function fromLaravel(path) {
   }
 }
 
-async function fromFirestore(read) {
-  if (!USE_FIRESTORE_FALLBACK || USE_MOCK || !db) return null;
-  try {
-    const result = await withTimeout(read());
-    return Array.isArray(result) ? (result.length ? result : null) : result;
-  } catch {
-    return null;
-  }
-}
-
 /** Ambil daftar seluruh green space (Taman Sritanjung, Blambangan, dst). */
 export async function getGreenSpaces() {
   const api = await fromLaravel("/green-spaces");
   if (api) return api;
-
-  const fs = await fromFirestore(async () => {
-    const { db, getDocs, collection, query, orderBy } = await loadFirestore();
-    const snap = await getDocs(query(collection(db, "green_space"), orderBy("name")));
-    return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
-  });
-  if (fs) return fs;
 
   await delay();
   return greenSpaces;
@@ -53,35 +30,21 @@ export async function getGreenSpaces() {
 /** Ambil daftar koridor (pilot + rencana perluasan). */
 export async function getKoridorList() {
   const api = await fromLaravel("/koridors");
-  if (api) return api;
-
-  const fs = await fromFirestore(async () => {
-    const { db, getDocs, collection } = await loadFirestore();
-    const snap = await getDocs(collection(db, "koridor"));
-    return snap.docs.map((d) => ({ id: Number(d.id), ...d.data() }));
-  });
-  if (fs) return fs;
+  // oxygen_kg_day & co2_reduced_kg_day dihitung dari `carbon_inputs` (lib/carbonBalance.js);
+  // koridor tanpa carbon_inputs memakai angka tersimpan apa adanya.
+  if (api) return Array.isArray(api) ? api.map((k) => terapkanNeracaKarbon(k)) : api;
 
   await delay();
-  return koridors;
+  return koridors.map((k) => terapkanNeracaKarbon(k));
 }
 
 /** Ambil detail satu koridor beserta skor lingkungan terbaru. */
 export async function getKoridorDetail(koridorId) {
   const api = await fromLaravel(`/koridors/${koridorId}`);
-  if (api) return api;
-
-  const fs = await fromFirestore(async () => {
-    const { db, getDoc, doc } = await loadFirestore();
-    const snap = await getDoc(doc(db, "koridor", String(koridorId)));
-    if (!snap.exists()) return null;
-    const sensor = await getLatestReading(koridorId);
-    return { id: Number(snap.id), ...snap.data(), sensor };
-  });
-  if (fs) return fs;
+  if (api) return terapkanNeracaKarbon(api);
 
   await delay();
   const koridor = koridors.find((k) => k.id === Number(koridorId));
   if (!koridor) throw new Error("Koridor tidak ditemukan.");
-  return koridor;
+  return terapkanNeracaKarbon(koridor);
 }
