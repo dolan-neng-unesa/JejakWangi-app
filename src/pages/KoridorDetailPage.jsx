@@ -179,6 +179,94 @@ function EmissionExamples({ cb }) {
   );
 }
 
+/** "Kunjunganmu hari ini": ringkasan dampak kunjungan di koridor (data dari `koridor.highlights.kunjungan`). */
+function VisitHighlights({ items }) {
+  return (
+    <section aria-labelledby="kunjungan-heading" className="mt-6">
+      <h2 id="kunjungan-heading" style={{ fontFamily: "var(--font-body)" }} className="font-bold text-xl text-ink-900">
+        Kunjunganmu hari ini
+      </h2>
+      <ul className="flex flex-col gap-3 mt-3">
+        {items.map((it) => (
+          <li key={it.title}>
+            <Panel className="p-3.5 flex items-start gap-3">
+              <span className="h-11 w-11 rounded-xl bg-canopy-100 text-canopy-700 flex items-center justify-center shrink-0">
+                <Icon name={it.icon} size={22} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-ink-900 leading-snug">{it.title}</p>
+                <p className="font-semibold text-canopy-700 mt-1 leading-snug">{it.value}</p>
+                <div className="flex items-center justify-between gap-2 mt-1.5">
+                  <span className="text-xs text-ink-500">{it.note}</span>
+                  {it.sdg && <span className="text-[0.65rem] font-semibold text-ink-500 whitespace-nowrap">{it.sdg}</span>}
+                </div>
+              </div>
+            </Panel>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** "Dampak bersama kita": capaian komunitas bulan ini (data dari `koridor.highlights.dampak`). */
+function CommunityImpact({ dampak, pesan }) {
+  const fmt = (n) => Number(n).toLocaleString("id-ID");
+  return (
+    <section aria-labelledby="dampak-heading" className="mt-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="dampak-heading" style={{ fontFamily: "var(--font-body)" }} className="font-bold text-xl text-ink-900">
+          {dampak.judul ?? "Dampak bersama kita"}
+        </h2>
+        {dampak.periode && (
+          <span className="text-[0.7rem] font-semibold text-canopy-700 bg-canopy-100 rounded-full px-2.5 py-1 whitespace-nowrap">
+            {dampak.periode}
+          </span>
+        )}
+      </div>
+
+      <div className="mt-3 rounded-3xl bg-canopy-700 text-white p-5">
+        {dampak.komunitas && (
+          <p className="flex items-center gap-2 text-xs text-white/85">
+            <Icon name="users" size={16} />
+            {dampak.komunitas}
+          </p>
+        )}
+        <div className="grid grid-cols-2 gap-4 mt-4">
+          <div>
+            <Icon name="leaf" size={20} className="text-white/80" />
+            <p className="mt-2 leading-none">
+              <span className="text-4xl">{fmt(dampak.co2_kg)}</span>
+              <span className="text-base ml-1">kg</span>
+            </p>
+            <p className="text-xs text-white/75 mt-1.5">CO₂ dihemat</p>
+          </div>
+          <div className="border-l border-white/20 pl-4">
+            <Icon name="bag" size={20} className="text-white/80" />
+            <p className="mt-2 leading-none text-4xl">{fmt(dampak.kantong_plastik)}</p>
+            <p className="text-xs text-white/75 mt-1.5">Kantong plastik dikurangi</p>
+          </div>
+        </div>
+        {dampak.kompos && (
+          <div className="mt-5 pt-4 border-t border-white/15 flex items-center gap-3">
+            <span className="h-11 w-11 rounded-xl bg-canopy-800/70 flex items-center justify-center shrink-0">
+              <Icon name="sprout" size={22} />
+            </span>
+            <p className="text-sm font-semibold leading-snug">{dampak.kompos}</p>
+          </div>
+        )}
+      </div>
+
+      {pesan && (
+        <p className="flex items-start gap-2 mt-3 text-xs text-ink-500 leading-snug">
+          <Icon name="heart" size={16} className="text-canopy-700 shrink-0" />
+          {pesan}
+        </p>
+      )}
+    </section>
+  );
+}
+
 function SensorRow({ icon, label, value, status }) {
   return (
     <div className="bg-white border border-canopy-800/10 rounded-xl px-3.5 py-3 flex items-center justify-between">
@@ -269,7 +357,11 @@ export default function KoridorDetailPage() {
               className="w-full h-40 object-cover rounded-2xl mt-4"
             />
 
-            <Panel className="p-4 mt-4">
+            {koridor.highlights?.kunjungan?.length > 0 && <VisitHighlights items={koridor.highlights.kunjungan} />}
+            {koridor.highlights?.eco_coach && <EcoCoach message={koridor.highlights.eco_coach} className="mt-4" />}
+            {koridor.highlights?.dampak && <CommunityImpact dampak={koridor.highlights.dampak} pesan={koridor.highlights.pesan} />}
+
+            <Panel className="p-4 mt-6">
               <PanelHeader icon="leaf" title={koridor.condition_title} subtitle="Estimasi kontribusi lingkungan" />
               {(koridor.oxygen_kg_day != null || koridor.co2_reduced_kg_day != null) && (
                 <div className="flex gap-3 mt-3">
@@ -287,7 +379,7 @@ export default function KoridorDetailPage() {
               </p>
             </Panel>
 
-            <EcoCoach page="koridor" className="mt-4" />
+            {!koridor.highlights?.eco_coach && <EcoCoach page="koridor" className="mt-4" />}
             <CarbonCalculator km={km} setKm={setKm} perWeek={perWeek} setPerWeek={setPerWeek} />
 
             <p className="text-xs font-medium text-ink-500 tracking-wide uppercase mt-6 mb-2.5">

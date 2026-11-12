@@ -8,6 +8,8 @@ import thumbBlambangan from "../assets/pages/koridor/thumb-blambangan.png";
 import thumbPecinan from "../assets/pages/koridor/thumb-pecinan.png";
 import thumbMarinaBoom from "../assets/pages/koridor/thumb-marinaboom.png";
 import heroKoridor1 from "../assets/pages/koridor/hero-koridor1.png";
+import thumbPasar from "../assets/pages/koridor/thumb-pasar.png";
+import heroPasar from "../assets/pages/koridor/hero-pasar.png";
 
 export const greenSpaces = [
   {
@@ -49,6 +51,7 @@ export const koridors = [
     hijau_score: 5,
     umkm_count: 5,
     status: "pilot",
+    sort_order: 1, // urutan tampil di daftar; id tetap = nomor wilayah ESP32
     // Jalur koridor [lat, lng] — koordinat perkiraan (titik awal = Taman Sritanjung,
     // titik akhir = Taman Blambangan dari data green_space). Ganti dengan hasil survei.
     path: [
@@ -132,6 +135,7 @@ export const koridors = [
     hijau_score: 4,
     umkm_count: 8,
     status: "rencana",
+    sort_order: 3, // urutan tampil di daftar; id tetap = nomor wilayah ESP32
     distance_meter: 620,
     estimate_minutes: 9,
     // Jalur koridor [lat, lng] — koordinat perkiraan, ganti dengan hasil survei / gambar di mode edit peta (/map?edit=1).
@@ -214,6 +218,7 @@ export const koridors = [
     hijau_score: 3,
     umkm_count: 3,
     status: "rencana",
+    sort_order: 4, // urutan tampil di daftar; id tetap = nomor wilayah ESP32
     distance_meter: 510,
     estimate_minutes: 8,
     // Jalur koridor [lat, lng] — koordinat perkiraan, ganti dengan hasil survei / gambar di mode edit peta (/map?edit=1).
@@ -287,6 +292,7 @@ export const koridors = [
     hijau_score: 5,
     umkm_count: 6,
     status: "rencana",
+    sort_order: 5, // urutan tampil di daftar; id tetap = nomor wilayah ESP32
     distance_meter: 350,
     estimate_minutes: 5,
     // Jalur koridor [lat, lng] — koordinat perkiraan, ganti dengan hasil survei / gambar di mode edit peta (/map?edit=1).
@@ -362,6 +368,7 @@ export const koridors = [
     hijau_score: 1,
     umkm_count: 4,
     status: "rencana",
+    sort_order: 6, // urutan tampil di daftar; id tetap = nomor wilayah ESP32
     distance_meter: 480,
     estimate_minutes: 7,
     // Jalur koridor [lat, lng] — koordinat perkiraan, ganti dengan hasil survei / gambar di mode edit peta (/map?edit=1).
@@ -441,6 +448,7 @@ export const koridors = [
     hijau_score: 4,
     umkm_count: 4,
     status: "rencana",
+    sort_order: 7, // urutan tampil di daftar; id tetap = nomor wilayah ESP32
     distance_meter: 610,
     estimate_minutes: 9,
     // Jalur koridor [lat, lng] — koordinat perkiraan, ganti dengan hasil survei / gambar di mode edit peta (/map?edit=1).
@@ -502,6 +510,75 @@ export const koridors = [
       kebisingan: 58, kebisingan_status: "Tenang",
       uv_index: 5.1, uv_status: "Sedang",
       pm10: 40, so2: 25, co: 1.5, o3: 60, no2: 30,
+      sensor_status: "online",
+      recorded_at: new Date().toISOString(),
+    },
+  },
+  {
+    id: 7,
+    short_name: "Corridor Pasar",
+    formal_name: "Koridor Pasar Induk",
+    route_label: "Pasar Induk Banyuwangi",
+    desc: "Pasar Induk Banyuwangi",
+    thumbnail: thumbPasar,
+    hero_image: heroPasar,
+    hijau_level: "agak_hijau",
+    hijau_score: 4,
+    umkm_count: 5,
+    status: "rencana",
+    sort_order: 2, // tampil di posisi 2 walau id-nya 7 (id = nomor wilayah ESP32, tidak digeser)
+    distance_meter: 450,
+    estimate_minutes: 7,
+    // Jalur koridor [lat, lng] — koordinat perkiraan, ganti dengan hasil survei / gambar di mode edit peta (/map?edit=1).
+    path: [
+      [-8.2138, 114.3718],
+      [-8.2145, 114.3731],
+      [-8.2152, 114.3742],
+      [-8.2158, 114.3752],
+    ],
+    shade_score: 60,
+    // Estimasi kontribusi lingkungan koridor (kg/hari) — angka perkiraan, ganti dengan hasil kajian.
+    oxygen_kg_day: 6.0,
+    co2_reduced_kg_day: 8.2,
+    // Masukan neraca karbon (lib/carbonBalance.js). Angka di bawah CONTOH — ganti dengan hasil survei.
+    carbon_inputs: {
+      pohon: [
+        { jenis: "mahoni", jumlah: 10 },
+        { jenis: "angsana", jumlah: 8 },
+      ],
+      kendaraanPerHari: { motor: 2600, mobil: 420, truk: 45 },
+      toko: [{ nama: "Kios Kuliner", unitAC: 1, kWPerUnit: 0.75, jamOperasi: 10, faktorBeban: 0.6 }],
+      sumberData: { kendaraan: "ILUSTRASI", pohon: "ILUSTRASI", ac: "ILUSTRASI" },
+    },
+    condition_title: "Kondisi Koridor Terpilih",
+    condition_desc:
+      "Koridor pasar tradisional yang ramai bongkar muat pada pagi hari, dengan deretan pedagang kuliner dan pohon peneduh di sepanjang jalur.",
+    // Konten halaman detail sesuai mockup "Koridor Pasar Induk" — angka ILUSTRASI, ganti dengan data lapangan.
+    // icon: nama ikon di components/global/Icon.jsx. Tanpa `highlights` → detail memakai tampilan standar.
+    highlights: {
+      kunjungan: [
+        { icon: "footprints", title: "Parkir sekali, jalan 450 m", value: "Hemat 120 g CO₂", note: "Setara ±Rp500", sdg: "SDG 13" },
+        { icon: "bag", title: "Bawa tas sendiri di 2 lapak", value: "2 kantong plastik berkurang", note: "Belanja lebih ramah bumi", sdg: "SDG 12" },
+        { icon: "wind", title: "Udara saat kamu jalan", value: "ISPU 45 · Baik", note: "Jalur 3°C lebih sejuk", sdg: "SDG 3 & 11" },
+      ],
+      eco_coach: "Besok coba datang sebelum pukul 07.00, pasar belum padat kendaraan bongkar muat.",
+      dampak: {
+        judul: "Dampak bersama kita",
+        periode: "Bulan ini",
+        komunitas: "Warga Sritanjung–Blambangan",
+        co2_kg: 85,
+        kantong_plastik: 1240,
+        kompos: "300 kg sampah sayur pasar jadi kompos untuk 40 pohon taman.",
+      },
+      pesan: "Kontribusi kecil kita, perubahan besar bersama. Terima kasih sudah ikut menjaga kawasan.",
+    },
+    sensor: {
+      pm25: 22, pm25_status: "Sehat",
+      suhu: 28.9, suhu_status: "Hangat",
+      kelembaban: 62, kelembaban_status: "Nyaman",
+      kebisingan: 66, kebisingan_status: "Ramai",
+      uv_index: 4.8, uv_status: "Sedang",
+      pm10: 36, so2: 20, co: 1.4, o3: 52, no2: 28,
       sensor_status: "online",
       recorded_at: new Date().toISOString(),
     },
