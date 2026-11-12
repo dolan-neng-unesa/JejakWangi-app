@@ -47,7 +47,11 @@ export default function LoginPage() {
       } else {
         await signInWithEmail(email, password);
       }
+<<<<<<< HEAD
       navigate("/scan");
+=======
+      navigate("/home");
+>>>>>>> 1008cb051a1e2a49b82b14cae5ac03efc28aaadf
     } catch (err) {
       setError(err.message);
     } finally {
@@ -142,7 +146,11 @@ export default function LoginPage() {
           disabled={loading}
           onBusyChange={setSocialBusy}
           onError={setError}
+<<<<<<< HEAD
           onSuccess={() => navigate("/scan")}
+=======
+          onSuccess={() => navigate("/home")}
+>>>>>>> 1008cb051a1e2a49b82b14cae5ac03efc28aaadf
         />
       </div>
 

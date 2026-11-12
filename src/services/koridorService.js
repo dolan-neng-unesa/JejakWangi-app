@@ -1,7 +1,10 @@
 import { delay } from "./config";
 import { fetchLaravel, isLaravelAvailable } from "./laravelClient";
 import { greenSpaces, koridors } from "../data/mockGreenSpaces";
+<<<<<<< HEAD
 import { terapkanNeracaKarbon } from "../lib/carbonBalance";
+=======
+>>>>>>> 1008cb051a1e2a49b82b14cae5ac03efc28aaadf
 
 /**
  * Green space & koridor. Urutan sumber: Laravel -> mock.
@@ -30,9 +33,13 @@ export async function getGreenSpaces() {
 /** Ambil daftar koridor (pilot + rencana perluasan). */
 export async function getKoridorList() {
   const api = await fromLaravel("/koridors");
+<<<<<<< HEAD
   // oxygen_kg_day & co2_reduced_kg_day dihitung dari `carbon_inputs` (lib/carbonBalance.js);
   // koridor tanpa carbon_inputs memakai angka tersimpan apa adanya.
   if (api) return Array.isArray(api) ? api.map((k) => terapkanNeracaKarbon(k)) : api;
+=======
+  if (api) return api;
+>>>>>>> 1008cb051a1e2a49b82b14cae5ac03efc28aaadf
 
   await delay();
   return koridors.map((k) => terapkanNeracaKarbon(k));
@@ -41,7 +48,11 @@ export async function getKoridorList() {
 /** Ambil detail satu koridor beserta skor lingkungan terbaru. */
 export async function getKoridorDetail(koridorId) {
   const api = await fromLaravel(`/koridors/${koridorId}`);
+<<<<<<< HEAD
   if (api) return terapkanNeracaKarbon(api);
+=======
+  if (api) return api;
+>>>>>>> 1008cb051a1e2a49b82b14cae5ac03efc28aaadf
 
   await delay();
   const koridor = koridors.find((k) => k.id === Number(koridorId));
