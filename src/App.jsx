@@ -40,6 +40,9 @@ const InfoPage = lazy(() => import("./pages/InfoPage"));
 const KasirPage = lazy(() => import("./pages/KasirPage"));
 const TimbanganPage = lazy(() => import("./pages/TimbanganPage"));
 const LaporKoridorPage = lazy(() => import("./pages/LaporKoridorPage"));
+const ParkirScanPage = lazy(() => import("./pages/ParkirScanPage"));
+const CheckinPage = lazy(() => import("./pages/CheckinPage"));
+const DampakPage = lazy(() => import("./pages/DampakPage"));
 const EcoCoachChatPage = lazy(() => import("./pages/EcoCoachChatPage"));
 
 function PageLoading() {
@@ -110,6 +113,9 @@ export default function App() {
           <Route path="/info" element={<InfoPage />} />
           <Route path="/timbangan" element={<TimbanganPage />} />
           <Route path="/lapor" element={<LaporKoridorPage />} />
+          <Route path="/parkir" element={<ParkirScanPage />} />
+          <Route path="/checkin" element={<CheckinPage />} />
+          <Route path="/dampak" element={<DampakPage />} />
           <Route path="/eco-coach" element={<EcoCoachChatPage />} />
           <Route path="/aktivitas" element={<ActivityPage />} />
           <Route path="/aktivitas/selesai/:id" element={<ActivityResultPage />} />

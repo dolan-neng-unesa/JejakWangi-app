@@ -351,24 +351,11 @@ export default function KoridorDetailPage() {
 
         {koridor && (
           <>
-            {koridor.hero_video ? (
-              <video
-                src={koridor.hero_video}
-                poster={koridor.hero_image || undefined}
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                className="w-full h-40 object-cover rounded-2xl mt-4"
-              />
-            ) : (
-              <SmartImage
-                src={koridor.hero_image}
-                alt={koridor.formal_name}
-                className="w-full h-40 object-cover rounded-2xl mt-4"
-              />
-            )}
+            <SmartImage
+              src={koridor.hero_image}
+              alt={koridor.formal_name}
+              className="w-full h-40 object-cover rounded-2xl mt-4"
+            />
 
             {koridor.highlights?.kunjungan?.length > 0 && <VisitHighlights items={koridor.highlights.kunjungan} />}
             {koridor.highlights?.eco_coach && <EcoCoach message={koridor.highlights.eco_coach} className="mt-4" />}
