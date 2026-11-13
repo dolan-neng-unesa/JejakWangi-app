@@ -35,7 +35,7 @@ async function laravelAuthRequest(path, body) {
 }
 
 // --- Mode mock (tanpa backend): sesi disimpan di localStorage ---
-const MOCK_USER_KEY = "svarga_mock_user";
+const MOCK_USER_KEY = "jejak_wangi_mock_user";
 
 function readMockUser() {
   try {

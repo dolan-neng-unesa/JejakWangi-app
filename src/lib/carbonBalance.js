@@ -1,5 +1,5 @@
 /**
- * Neraca Karbon per Koridor — SVARGA
+ * Neraca Karbon per Koridor — JEJAK WANGI
  * ------------------------------------------------
  * Diadaptasi dari modul "Jejak Wangi" (neraca-karbon). ES module tanpa dependensi.
  * Satuan keluaran: kg CO2 per hari, kecuali disebut lain.
@@ -11,7 +11,7 @@
  *   Rasio serapan   R      = S ÷ (E_kend + E_AC) × 100%
  *   O2 setara              = S × 32/44
  *
- * Di SVARGA: `co2_reduced_kg_day` = S dan `oxygen_kg_day` = S × 32/44
+ * Di JEJAKWANGI: `co2_reduced_kg_day` = S dan `oxygen_kg_day` = S × 32/44
  * (lihat terapkanNeracaKarbon di bawah).
  */
 
@@ -318,11 +318,11 @@ export function hitungSemuaKoridor(daftarKoridor, opsi = {}) {
 }
 
 // ---------------------------------------------------------------------------
-// 6. JEMBATAN KE DATA KORIDOR SVARGA
+// 6. JEMBATAN KE DATA KORIDOR JEJAK WANGI
 // ---------------------------------------------------------------------------
 
 /**
- * Ubah koridor SVARGA (`koridor.carbon_inputs` + `distance_meter`) jadi masukan modul ini.
+ * Ubah koridor JEJAK WANGI (`koridor.carbon_inputs` + `distance_meter`) jadi masukan modul ini.
  * carbon_inputs: { pohon[], kendaraanPerHari{}, toko[], sumberData{}, panjangKm? }
  * Panjang koridor default = distance_meter / 1000; isi carbon_inputs.panjangKm bila
  * panjang hasil survei/jalur sebenarnya berbeda.
@@ -342,7 +342,7 @@ export function koridorKeMasukan(koridor) {
 
 /**
  * Isi `co2_reduced_kg_day` (= serapan pohon) dan `oxygen_kg_day` (= serapan × 32/44)
- * sebuah koridor SVARGA dari `carbon_inputs`, dan tempelkan hasil lengkapnya di
+ * sebuah koridor JEJAK WANGI dari `carbon_inputs`, dan tempelkan hasil lengkapnya di
  * `carbon_balance`. Tanpa `carbon_inputs` (atau datanya tidak valid) koridor dikembalikan
  * apa adanya, jadi angka tersimpan di database tetap jadi cadangan dan UI tidak rusak.
  */

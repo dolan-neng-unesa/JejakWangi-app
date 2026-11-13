@@ -185,8 +185,8 @@ describe("journeySync", () => {
   it("kasir menerbitkan QR; 403 untuk non-kasir dijelaskan", async () => {
     const { sync, session } = await load();
     session.writeSession({ id: 1 }, "tok");
-    fakeApi({ "POST /byo/token": () => json({ data: { qr_payload: `svarga:byo:${"a".repeat(40)}`, expires_at: hariDepan(0.003), berlaku_menit: 5 } }, 201) });
-    expect((await sync.terbitkanQrTempatSendiri()).qr_payload).toMatch(/^svarga:byo:/);
+    fakeApi({ "POST /byo/token": () => json({ data: { qr_payload: `jejakwangi:byo:${"a".repeat(40)}`, expires_at: hariDepan(0.003), berlaku_menit: 5 } }, 201) });
+    expect((await sync.terbitkanQrTempatSendiri()).qr_payload).toMatch(/^jejakwangi:byo:/);
     vi.restoreAllMocks();
     fakeApi({ "POST /byo/token": () => json({ message: "Hanya akun kasir UMKM yang dapat membuat QR ini." }, 403) });
     const r = await sync.terbitkanQrTempatSendiri();

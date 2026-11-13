@@ -27,7 +27,7 @@ export const KKAL_PER_KM = 70;
 export const POIN_PER_KM = 30;
 
 // ---------------------------------------------------------------------------------------------
-// Gamifikasi (HARUS sama dengan svarga-backend/config/jejakwangi.php; server tetap sumber kebenaran).
+// Gamifikasi (HARUS sama dengan jejak-wangi-backend/config/jejakwangi.php; server tetap sumber kebenaran).
 // ---------------------------------------------------------------------------------------------
 
 /** Kupon bertingkat. Progres = total km jalan kaki (non-simulasi) di bulan kalender berjalan (WIB). */
@@ -165,7 +165,7 @@ export function saranIspu(ispu) {
   };
 }
 
-/** Isi QR yang dikenali: "…/q/3", "svarga:koridor:3", atau angka saja. null bila tidak dikenali. */
+/** Isi QR yang dikenali: "…/q/3", "jejakwangi:koridor:3", atau angka saja. null bila tidak dikenali. */
 export function parseKoridorFromQr(text) {
   if (!text) return null;
   const str = String(text).trim();
@@ -173,10 +173,10 @@ export function parseKoridorFromQr(text) {
   return m ? Number(m[1]) : null;
 }
 
-/** Isi QR kasir "membawa tempat sendiri": "svarga:byo:<token>" atau token polos. null bila tidak dikenali. */
+/** Isi QR kasir "membawa tempat sendiri": "jejakwangi:byo:<token>" atau token polos. null bila tidak dikenali. */
 export function parseByoToken(text) {
   if (!text) return null;
   const str = String(text).trim();
-  const m = str.match(/^svarga:byo:([A-Za-z0-9]{20,64})$/) ?? str.match(/^([A-Za-z0-9]{20,64})$/);
+  const m = str.match(/^jejakwangi:byo:([A-Za-z0-9]{20,64})$/) ?? str.match(/^([A-Za-z0-9]{20,64})$/);
   return m ? m[1] : null;
 }

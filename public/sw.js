@@ -6,7 +6,7 @@
 // cache-first menyimpan respons "opaque" apa adanya — termasuk tile yang gagal
 // (403/429 dari penyedia) — lalu menyajikannya terus, sehingga tile kosong
 // "menempel" walau penyedia sudah pulih. v2 juga menghapus cache v1 itu.
-const TILE_CACHE = "svarga-map-tiles-v2";
+const TILE_CACHE = "jejak-wangi-map-tiles-v2";
 const TILE_HOSTS = ["basemaps.cartocdn.com", "tile.openstreetmap.org"];
 const MAX_TILES = 400;
 
@@ -15,7 +15,7 @@ self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("svarga-map-tiles-") && k !== TILE_CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("jejak-wangi-map-tiles-") && k !== TILE_CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });

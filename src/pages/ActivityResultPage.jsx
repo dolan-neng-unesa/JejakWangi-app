@@ -27,11 +27,12 @@ export default function ActivityResultPage() {
   const journey = useJourney();
   const act = getActivity(id);
   const [rank, setRank] = useState(null);
+  const [synced, setSynced] = useState(false); // Eco-Coach AI baru bertanya setelah aktivitas sampai di server
 
   // Kirim aktivitas ke server (bila login), tarik kupon & poin resmi, lalu ambil peringkat.
   useEffect(() => {
     let off = false;
-    syncJourney().then(() => fetchLeaderboard()).then((lb) => {
+    syncJourney().then(() => { if (!off) setSynced(true); return fetchLeaderboard(); }).then((lb) => {
       if (!off) setRank(lb?.rows.find((r) => r.is_me) ?? lb?.me ?? null);
     });
     return () => { off = true; };
@@ -106,7 +107,7 @@ export default function ActivityResultPage() {
           </div>
         )}
 
-        <EcoCoach page="hasil" progressKm={monthKm(journey)} tier={next} className="mt-3" />
+        <EcoCoach page="hasil" progressKm={monthKm(journey)} tier={next} ai={synced && !act.simulasi ? { mode: "ringkasan" } : null} tanyaLink="/eco-coach" className="mt-3" />
 
         {siapKlaim.length > 0 && !act.simulasi && (
           <div className="mt-4 rounded-2xl bg-ochre-100/70 border border-ochre-500/30 p-4 flex items-center gap-3">

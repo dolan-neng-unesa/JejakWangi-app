@@ -18,7 +18,7 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error) {
-    console.error("[SVARGA] Galat tak tertangani di UI:", error);
+    console.error("[JEJAK WANGI] Galat tak tertangani di UI:", error);
   }
 
   render() {

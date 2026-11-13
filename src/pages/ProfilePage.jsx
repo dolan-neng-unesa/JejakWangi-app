@@ -21,6 +21,8 @@ export default function ProfilePage() {
     { to: "/mood/riwayat", icon: "mood", label: "Riwayat mood" },
     { to: "/geofencing", icon: "pin", label: "Zona geofencing" },
     { to: "/charger", icon: "bolt", label: "Charger station surya" },
+    { to: "/timbangan", icon: "leaf", label: "Setoran sampah & pangan" },
+    { to: "/lapor", icon: "flag", label: "Lapor koridor" },
     { to: "/info", icon: "info", label: "Info & panduan" },
     { to: "/scan", icon: "qr", label: "Scan QR koridor" },
     { to: "/scan/tempat-sendiri", icon: "leaf", label: "Scan QR tempat sendiri" },

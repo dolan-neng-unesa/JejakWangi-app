@@ -11,7 +11,7 @@ const LANGKAH = [
 ];
 const FAQ = [
   { q: "Apakah pengisian benar-benar gratis?", a: "Ya. Stasiun JEJAK WANGI memakai energi matahari dan dapat dipakai tanpa biaya." },
-  { q: "Bagaimana jika port tidak berfungsi?", a: "Coba port lain di stasiun yang sama atau pilih stasiun terdekat di peta, lalu laporkan lewat tim SVARGA." },
+  { q: "Bagaimana jika port tidak berfungsi?", a: "Coba port lain di stasiun yang sama atau pilih stasiun terdekat di peta, lalu laporkan lewat tim JEJAKWANGI." },
   { q: "Apa itu titik hijau, oranye, dan biru di peta?", a: "Hijau: rute hijau. Oranye: UMKM sekitar. Biru: charger station surya." },
 ];
 

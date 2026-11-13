@@ -3,7 +3,7 @@
 // semua pengguna, salin JSON-nya ke KoridorSeeder.php (kolom `path`) dan
 // data/mockGreenSpaces.js — lihat README bagian "Jalur koridor".
 
-const KEY = "svarga:koridor-path-overrides:v1";
+const KEY = "jejakwangi:koridor-path-overrides:v1";
 
 export function loadPathOverrides() {
   try {

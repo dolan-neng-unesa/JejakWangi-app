@@ -1,8 +1,8 @@
 import { delay, USE_LARAVEL_API } from "./config";
 import { apiRequest } from "./laravelClient";
 
-const LOCAL_KEY = "svarga_mood_logs_mock";
-const ANON_SESSION_KEY = "svarga_anon_session";
+const LOCAL_KEY = "jejak_wangi_mood_logs_mock";
+const ANON_SESSION_KEY = "jejak_wangi_anon_session";
 
 let memorySessionId = null; // cadangan bila localStorage tidak tersedia (mode privat)
 

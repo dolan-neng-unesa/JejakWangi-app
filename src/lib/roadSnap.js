@@ -14,7 +14,7 @@
 import { pathLengthMeters } from "./geo";
 
 const ROUTER_URL = import.meta.env.VITE_ROUTING_URL || "https://routing.openstreetmap.de/routed-foot/route/v1/foot";
-const CACHE_KEY = "svarga:road-snap:v1";
+const CACHE_KEY = "jejakwangi:road-snap:v1";
 const RETRY_AFTER_MS = 60 * 1000;
 const TIMEOUT_MS = 8000;
 // Hasil routing yang >2,5x lebih panjang dari garis lurus antar waypoint dianggap

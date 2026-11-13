@@ -39,7 +39,7 @@ describe("Scan QR tempat sendiri (pelanggan)", () => {
     const user = userEvent.setup();
     konfirmasi.mockResolvedValue({ ok: true, applied: true, message: "Cooldown kuponmu berkurang 1 hari. Terima kasih!", cooldowns: [{ tier: 1, nama: "Pelari Mager", cooldown_until: "2026-12-14T00:00:00Z", sudah_bisa_diklaim: false }] });
     render(halaman);
-    await user.type(screen.getByLabelText(/tempel kode/i), `svarga:byo:${TOKEN}`);
+    await user.type(screen.getByLabelText(/tempel kode/i), `jejakwangi:byo:${TOKEN}`);
     await user.click(screen.getByRole("button", { name: "Lanjut" }));
     await waitFor(() => expect(screen.getByText("Cooldown berkurang!")).toBeTruthy());
     expect(konfirmasi).toHaveBeenCalledWith(TOKEN);
@@ -51,7 +51,7 @@ describe("Scan QR tempat sendiri (pelanggan)", () => {
   it("kode tidak valid ditolak tanpa memanggil server", async () => {
     const user = userEvent.setup();
     render(halaman);
-    await user.type(screen.getByLabelText(/tempel kode/i), "svarga:koridor:1");
+    await user.type(screen.getByLabelText(/tempel kode/i), "jejakwangi:koridor:1");
     await user.click(screen.getByRole("button", { name: "Lanjut" }));
     expect(screen.getByRole("alert").textContent).toMatch(/tidak dikenali/i);
     expect(konfirmasi).not.toHaveBeenCalled();
@@ -83,7 +83,7 @@ describe("Scan QR tempat sendiri (pelanggan)", () => {
 describe("Mode kasir", () => {
   it("tombol menerbitkan QR sekali pakai dan menampilkan hitung mundur", async () => {
     const user = userEvent.setup();
-    terbitkan.mockResolvedValue({ ok: true, qr_payload: `svarga:byo:${TOKEN}`, expires_at: new Date(Date.now() + 300000).toISOString() });
+    terbitkan.mockResolvedValue({ ok: true, qr_payload: `jejakwangi:byo:${TOKEN}`, expires_at: new Date(Date.now() + 300000).toISOString() });
     render(ui("/kasir", <Route path="/kasir" element={<KasirPage />} />));
     await user.click(screen.getByRole("button", { name: /customer membawa tempat sendiri/i }));
     await waitFor(() => expect(screen.getByAltText("QR untuk pelanggan")).toBeTruthy());

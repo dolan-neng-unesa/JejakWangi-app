@@ -3,7 +3,7 @@ import { fetchLaravel, isLaravelAvailable } from "./laravelClient";
 import { umkms, bfestEvents } from "../data/mockContent";
 
 /**
- * UMKM & Festival — data dari backend Laravel (lihat svarga-backend/).
+ * UMKM & Festival — data dari backend Laravel (lihat jejak-wangi-backend/).
  * Urutan sumber data:
  *   1. Laravel API (kalau VITE_LARAVEL_API_URL diisi dan server terjangkau)
  *   2. Data mock lokal (fallback bila Laravel tidak dikonfigurasi / gagal)

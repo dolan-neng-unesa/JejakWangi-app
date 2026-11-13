@@ -7,11 +7,11 @@
 // "blokir cookie dan data situs" melempar SecurityError, yang sebelumnya
 // membuat seluruh aplikasi gagal render saat membaca sesi.
 
-export const AUTH_EVENT = "svarga-mock-auth-change"; // nama lama dipertahankan (dipakai juga mode mock)
+export const AUTH_EVENT = "jejak-wangi-mock-auth-change"; // nama lama dipertahankan (dipakai juga mode mock)
 
-const TOKEN_KEY = "svarga_laravel_token";
-const USER_KEY = "svarga_laravel_user";
-const EXPIRES_KEY = "svarga_laravel_expires";
+const TOKEN_KEY = "jejak_wangi_laravel_token";
+const USER_KEY = "jejak_wangi_laravel_user";
+const EXPIRES_KEY = "jejak_wangi_laravel_expires";
 
 function get(key) {
   try {

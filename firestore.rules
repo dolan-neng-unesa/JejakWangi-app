@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// SVARGA — Firestore Security Rules
+// JEJAK WANGI — Firestore Security Rules
 //
 // Prinsip:
 //  - Data lingkungan/koridor/konten bersifat PUBLIK untuk dibaca (tanpa login),

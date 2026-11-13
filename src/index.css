@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 /* =========================================================
-   SVARGA — Design Tokens
+   JEJAK WANGI — Design Tokens
    Restorative Green-Wellness Corridor · Digital Twin
    Palette terinspirasi kanopi pohon, tanah Banyuwangi, dan
    kain batik gajah oling (aksen ochre/gold).
    ========================================================= */
 @theme {
-  /* Warna utama — disesuaikan dengan mockup UI resmi (SVARGA UI Design) */
+  /* Warna utama — disesuaikan dengan mockup UI resmi (JEJAK WANGI UI Design) */
   --color-canopy-950: #16241a;
   --color-canopy-900: #1e3323;
   --color-canopy-800: #2c4a30;
@@ -70,7 +70,7 @@ h1, h2, h3, .font-display {
   display: none;
 }
 
-@keyframes svarga-sheet-in {
+@keyframes jejak-wangi-sheet-in {
   from {
     opacity: 0;
     transform: translateY(24px);
@@ -81,7 +81,7 @@ h1, h2, h3, .font-display {
   }
 }
 .animate-in {
-  animation: svarga-sheet-in 0.3s ease-out both;
+  animation: jejak-wangi-sheet-in 0.3s ease-out both;
 }
 
 /* Motif garis kanopi — dipakai sbg divider bersignature di beberapa layout */

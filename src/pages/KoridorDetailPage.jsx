@@ -379,7 +379,7 @@ export default function KoridorDetailPage() {
               </p>
             </Panel>
 
-            {!koridor.highlights?.eco_coach && <EcoCoach page="koridor" className="mt-4" />}
+            {!koridor.highlights?.eco_coach && <EcoCoach page="koridor" tanyaLink={`/eco-coach?koridor=${koridor.id}`} className="mt-4" />}
             <CarbonCalculator km={km} setKm={setKm} perWeek={perWeek} setPerWeek={setPerWeek} />
 
             <p className="text-xs font-medium text-ink-500 tracking-wide uppercase mt-6 mb-2.5">

@@ -38,6 +38,9 @@ const ChargerDetailPage = lazy(() => import("./pages/ChargerDetailPage"));
 const ChargingPage = lazy(() => import("./pages/ChargingPage"));
 const InfoPage = lazy(() => import("./pages/InfoPage"));
 const KasirPage = lazy(() => import("./pages/KasirPage"));
+const TimbanganPage = lazy(() => import("./pages/TimbanganPage"));
+const LaporKoridorPage = lazy(() => import("./pages/LaporKoridorPage"));
+const EcoCoachChatPage = lazy(() => import("./pages/EcoCoachChatPage"));
 
 function PageLoading() {
   return (
@@ -63,7 +66,7 @@ function GeofenceOverlay() {
   return <GeofenceAlert zone={activeZone} soundscape={activeSoundscape} onClose={closeAlert} />;
 }
 
-// SVARGA — Routing (Pekan 1 setup; Pekan 2 Onboarding/Login/Home; Pekan 3 Koridor;
+// JEJAK WANGI — Routing (Pekan 1 setup; Pekan 2 Onboarding/Login/Home; Pekan 3 Koridor;
 // Pekan 4 Map + Smart Green Route; Pekan 5 Route Detail + Mood Tracker;
 // Pekan 6 Soundscape Therapy + Geofencing)
 export default function App() {
@@ -105,6 +108,9 @@ export default function App() {
           <Route path="/charger/:id" element={<ChargerDetailPage />} />
           <Route path="/charger/:id/isi" element={<ChargingPage />} />
           <Route path="/info" element={<InfoPage />} />
+          <Route path="/timbangan" element={<TimbanganPage />} />
+          <Route path="/lapor" element={<LaporKoridorPage />} />
+          <Route path="/eco-coach" element={<EcoCoachChatPage />} />
           <Route path="/aktivitas" element={<ActivityPage />} />
           <Route path="/aktivitas/selesai/:id" element={<ActivityResultPage />} />
           <Route path="/misi" element={<ChallengePage />} />
