@@ -38,6 +38,9 @@ const ChargerDetailPage = lazy(() => import("./pages/ChargerDetailPage"));
 const ChargingPage = lazy(() => import("./pages/ChargingPage"));
 const InfoPage = lazy(() => import("./pages/InfoPage"));
 const KasirPage = lazy(() => import("./pages/KasirPage"));
+const TimbanganPage = lazy(() => import("./pages/TimbanganPage"));
+const LaporKoridorPage = lazy(() => import("./pages/LaporKoridorPage"));
+const EcoCoachChatPage = lazy(() => import("./pages/EcoCoachChatPage"));
 
 function PageLoading() {
   return (
@@ -105,6 +108,9 @@ export default function App() {
           <Route path="/charger/:id" element={<ChargerDetailPage />} />
           <Route path="/charger/:id/isi" element={<ChargingPage />} />
           <Route path="/info" element={<InfoPage />} />
+          <Route path="/timbangan" element={<TimbanganPage />} />
+          <Route path="/lapor" element={<LaporKoridorPage />} />
+          <Route path="/eco-coach" element={<EcoCoachChatPage />} />
           <Route path="/aktivitas" element={<ActivityPage />} />
           <Route path="/aktivitas/selesai/:id" element={<ActivityResultPage />} />
           <Route path="/misi" element={<ChallengePage />} />

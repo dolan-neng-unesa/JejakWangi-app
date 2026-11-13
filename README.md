@@ -157,5 +157,3 @@ Bentuk input/outputnya sengaja sederhana agar bisa diganti layanan AI nanti.
 
 Asumsi hitung (ubah di `lib/journey.js` DAN `jejak-wangi-backend/config/jejakwangi.php`, harus sama):
 BBM Rp10.000/L, 70 kkal/km, 30 poin/km, faktor emisi dari `carbonBalance.js`.
-#   J e j a k W a n g i - a p p  
- 

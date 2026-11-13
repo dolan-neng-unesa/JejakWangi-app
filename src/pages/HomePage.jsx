@@ -224,7 +224,7 @@ export default function HomePage() {
           })}
         </div>
 
-        <EcoCoach page="home" ispu={ispu} temperature={temperature} transport={journey.transport} className="mt-4" />
+        <EcoCoach page="home" ispu={ispu} temperature={temperature} transport={journey.transport} tanyaLink="/eco-coach" className="mt-4" />
 
         <h2 className="font-display font-bold text-lg text-ink-900 mt-6 mb-3">Menu Jejak Wangi</h2>
         <div className="grid grid-cols-3 gap-2.5">
