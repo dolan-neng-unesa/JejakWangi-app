@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-// SVARGA — Web-App Pengguna (PWA)
+// JEJAK WANGI — Web-App Pengguna (PWA)
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],

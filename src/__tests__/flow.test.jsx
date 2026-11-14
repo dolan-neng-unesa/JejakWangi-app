@@ -49,7 +49,7 @@ describe("Alur Jejak Wangi", () => {
     await user.click(screen.getByRole("button", { name: "Lanjut" }));
     expect(screen.getByRole("alert").textContent).toMatch(/tidak dikenali/i);
     await user.clear(screen.getByLabelText(/kode koridor/i));
-    await user.type(screen.getByLabelText(/kode koridor/i), "svarga:koridor:2");
+    await user.type(screen.getByLabelText(/kode koridor/i), "jejakwangi:koridor:2");
     await user.click(screen.getByRole("button", { name: "Lanjut" }));
     expect(screen.getByText("Kamu kesini naik apa?")).toBeTruthy();
   });

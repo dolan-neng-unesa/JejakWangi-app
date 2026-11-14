@@ -65,8 +65,8 @@ function tripBreaker() {
   if (!warned) {
     warned = true;
     console.info(
-      `[SVARGA] Backend Laravel (${LARAVEL_API_BASE}) tidak terjangkau — memakai data cadangan. ` +
-        "Jalankan `php artisan serve` di svarga-backend untuk data langsung."
+      `[JEJAK WANGI] Backend Laravel (${LARAVEL_API_BASE}) tidak terjangkau — memakai data cadangan. ` +
+        "Jalankan `php artisan serve` di jejak-wangi-backend untuk data langsung."
     );
   }
 }
@@ -105,7 +105,8 @@ export async function apiRequest(path, { method = "GET", body, auth = false, tim
   if (auth === true && !token) throw new ApiError("Silakan masuk terlebih dahulu.", { status: 401 });
 
   const headers = { Accept: "application/json" };
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const isForm = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body !== undefined && !isForm) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const controller = new AbortController();
@@ -125,7 +126,7 @@ export async function apiRequest(path, { method = "GET", body, auth = false, tim
     const request = fetch(`${LARAVEL_API_BASE}${path}`, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
       signal: controller.signal,
     });
     if (breaker && !everUp && !probe) {

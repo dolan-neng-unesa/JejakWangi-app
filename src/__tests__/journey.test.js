@@ -31,8 +31,8 @@ describe("lib/journey", () => {
   });
 
   it("parse isi QR", () => {
-    expect(parseKoridorFromQr("https://svarga.id/q/3")).toBe(3);
-    expect(parseKoridorFromQr("svarga:koridor:2")).toBe(2);
+    expect(parseKoridorFromQr("https://jejakwangi.id/q/3")).toBe(3);
+    expect(parseKoridorFromQr("jejakwangi:koridor:2")).toBe(2);
     expect(parseKoridorFromQr(" 5 ")).toBe(5);
     expect(parseKoridorFromQr("halo")).toBeNull();
     expect(parseKoridorFromQr("")).toBeNull();
@@ -83,9 +83,9 @@ describe("gamifikasi: tier, cooldown, bulan WIB", () => {
 
   it("parse token QR tempat sendiri", () => {
     const t = "a".repeat(40);
-    expect(parseByoToken(`svarga:byo:${t}`)).toBe(t);
+    expect(parseByoToken(`jejakwangi:byo:${t}`)).toBe(t);
     expect(parseByoToken(t)).toBe(t);
-    expect(parseByoToken("svarga:koridor:1")).toBeNull();
+    expect(parseByoToken("jejakwangi:koridor:1")).toBeNull();
     expect(parseByoToken("pendek")).toBeNull();
   });
 });

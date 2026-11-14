@@ -35,7 +35,7 @@ describe("sessionStore", () => {
     const s = await load("../services/sessionStore.js");
     s.writeSession({ id: 1 }, "tok", new Date(Date.now() - 1000).toISOString());
     expect(s.readSession()).toBeNull();
-    expect(localStorage.getItem("svarga_laravel_token")).toBeNull();
+    expect(localStorage.getItem("jejak_wangi_laravel_token")).toBeNull();
   });
 
   it("tidak melempar saat localStorage diblokir (mode privat)", async () => {
@@ -184,14 +184,14 @@ describe("authService", () => {
     const seen = [];
     const unsubscribe = auth.subscribeToAuthChanges((u) => seen.push(u?.uid ?? null));
 
-    await auth.signInWithEmail("tamu@svarga.app", "rahasia123");
-    expect(seen).toEqual([null, "mock-tamu@svarga.app"]);
+    await auth.signInWithEmail("tamu@jejakwangi.app", "rahasia123");
+    expect(seen).toEqual([null, "mock-tamu@jejakwangi.app"]);
 
     unsubscribe();
   });
 
   it("dengan VITE_LARAVEL_API_URL: sesi mock diabaikan, hanya sesi Laravel yang dihitung", async () => {
-    localStorage.setItem("svarga_mock_user", JSON.stringify({ uid: "mock-x" }));
+    localStorage.setItem("jejak_wangi_mock_user", JSON.stringify({ uid: "mock-x" }));
     vi.stubGlobal("fetch", vi.fn(async () => json({}, { status: 500 })));
     const auth = await load("../services/authService.js");
     const seen = [];
@@ -205,13 +205,13 @@ describe("authService", () => {
   it("signOutUser membersihkan sesi Laravel DAN sesi mock, walau request logout gagal", async () => {
     const session = await load("../services/sessionStore.js");
     session.writeSession({ id: 1, name: "A", email: "a@b.id" }, "tok");
-    localStorage.setItem("svarga_mock_user", JSON.stringify({ uid: "mock-x" }));
+    localStorage.setItem("jejak_wangi_mock_user", JSON.stringify({ uid: "mock-x" }));
     vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("offline"); }));
     const auth = await import("../services/authService.js");
 
     await auth.signOutUser();
     expect(session.readSession()).toBeNull();
-    expect(localStorage.getItem("svarga_mock_user")).toBeNull();
+    expect(localStorage.getItem("jejak_wangi_mock_user")).toBeNull();
   });
 });
 
@@ -233,7 +233,7 @@ describe("moodService", () => {
     const mood = await load("../services/moodService.js");
 
     await expect(mood.submitMood({ greenSpaceId: 1, moodScore: 9 })).rejects.toMatchObject({ status: 422 });
-    expect(localStorage.getItem("svarga_mood_logs_mock")).toBeNull(); // tidak ada catatan palsu tersimpan
+    expect(localStorage.getItem("jejak_wangi_mood_logs_mock")).toBeNull(); // tidak ada catatan palsu tersimpan
   });
 
   it("submitMood jatuh ke fallback hanya untuk galat server/jaringan", async () => {

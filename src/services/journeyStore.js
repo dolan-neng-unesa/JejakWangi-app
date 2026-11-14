@@ -4,8 +4,8 @@
 import { useSyncExternalStore } from "react";
 import { KUPON_COOLDOWN_HARI, KUPON_MERCHANT, TIERS, monthKeyWIB, statusTier } from "../lib/journey";
 
-const KEY = "svarga_journey_v2";
-const EVENT = "svarga-journey-change";
+const KEY = "jejak_wangi_journey_v2";
+const EVENT = "jejak-wangi-journey-change";
 
 const kosong = () => ({
   transport: null, // 'motor' | 'mobil' | 'jalan' | 'sepeda'

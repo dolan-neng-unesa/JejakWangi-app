@@ -76,7 +76,7 @@ describe("skenario", () => {
   });
 });
 
-describe("terapkanNeracaKarbon (jembatan ke koridor SVARGA)", () => {
+describe("terapkanNeracaKarbon (jembatan ke koridor JEJAK WANGI)", () => {
   const koridor = {
     id: 9,
     formal_name: "Koridor 9",
@@ -112,7 +112,7 @@ describe("terapkanNeracaKarbon (jembatan ke koridor SVARGA)", () => {
   });
 });
 
-describe("data mock koridor SVARGA", () => {
+describe("data mock koridor JEJAK WANGI", () => {
   it("ketujuh koridor punya neraca karbon dan O₂ < CO₂ (sesuai 32/44)", async () => {
     vi.resetModules();
     vi.stubEnv("VITE_LARAVEL_API_URL", "");

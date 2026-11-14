@@ -1,4 +1,4 @@
-// SVARGA — Konfigurasi peta bersama, dipakai di semua halaman yang menampilkan
+// JEJAK WANGI — Konfigurasi peta bersama, dipakai di semua halaman yang menampilkan
 // Leaflet (MapPage, SmartGreenRoutePage, RouteDetailPage, NavigationPage,
 // GeofencingPage) supaya gaya & titik awal peta konsisten di seluruh app.
 //

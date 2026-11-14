@@ -13,7 +13,7 @@ export default function SplashScreen() {
           <span className="h-9 w-9 rounded-2xl bg-sand-50 text-canopy-700 flex items-center justify-center">
             <Icon name="leaf" size={20} />
           </span>
-          <span className="font-display font-bold text-2xl tracking-wide">SVARGA</span>
+          <span className="font-display font-bold text-2xl tracking-wide">JEJAK WANGI</span>
         </div>
         <p className="mt-3 text-sand-100/90 text-sm">Sehat. Nyaman. Terhubung.</p>
 

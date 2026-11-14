@@ -1,4 +1,4 @@
-// Elemen signature SVARGA: dial melingkar bergaya "instrumen digital twin",
+// Elemen signature JEJAKWANGI: dial melingkar bergaya "instrumen digital twin",
 // dipakai berulang untuk shade score, air quality, comfort, dsb.
 // Busur 270° (mulai -135° s.d. +135°) agar terasa seperti jarum ukur fisik, bukan progress bar generik.
 

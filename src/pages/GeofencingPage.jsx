@@ -54,7 +54,7 @@ export default function GeofencingPage() {
         </div>
 
         <h2 className="font-semibold text-ink-900 mt-5">Zona Aktifmu</h2>
-        <p className="text-sm text-ink-500 mt-1">Svarga otomatis aktif saat kamu memasuki kawasan ini.</p>
+        <p className="text-sm text-ink-500 mt-1">Jejak Wangi otomatis aktif saat kamu memasuki kawasan ini.</p>
 
         <div className="flex flex-col gap-2.5 mt-3">
           {zones.map((z) => (

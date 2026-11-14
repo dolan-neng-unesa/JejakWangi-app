@@ -61,7 +61,7 @@ export default function LoginPage() {
         <span className="h-14 w-14 rounded-2xl bg-canopy-700 text-sand-50 flex items-center justify-center">
           <Icon name="leaf" size={26} />
         </span>
-        <h1 className="font-display font-bold text-xl text-ink-900 mt-3 tracking-wide">SVARGA</h1>
+        <h1 className="font-display font-bold text-xl text-ink-900 mt-3 tracking-wide">JEJAK WANGI</h1>
         <p className="text-ink-500 text-sm mt-1">
           {isRegister ? "Buat akun baru" : "Selamat datang kembali!"}
         </p>

@@ -16,7 +16,7 @@ const CATEGORIES = [
   { id: "seni", label: "Seni", emoji: "🎭", text: "text-violet-600" },
 ];
 const CATEGORY_BY_ID = Object.fromEntries(CATEGORIES.map((c) => [c.id, c]));
-const BOOKMARK_KEY = "svarga_bfest_bookmarks";
+const BOOKMARK_KEY = "jejak_wangi_bfest_bookmarks";
 
 function pad2(n) {
   return String(n).padStart(2, "0");

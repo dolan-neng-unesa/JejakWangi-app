@@ -1,5 +1,5 @@
 -- =========================================================
--- SVARGA — Skema Basis Data (PostgreSQL)
+-- JEJAK WANGI — Skema Basis Data (PostgreSQL)
 -- Sesuai ERD (Gambar 6 pada proposal / Skema Basis Data Miro)
 -- Pekan 1: Database
 -- =========================================================

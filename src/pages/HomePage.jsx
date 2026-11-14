@@ -27,7 +27,7 @@ const menuItems = [
 
 // Konten rekomendasi & kuliner masih statis (belum ada tabel khusus di skema
 // database untuk "rating"/"persentase hijau") — mengikuti mockup UI apa adanya,
-// menyusul nanti begitu tabel pendukungnya ditambahkan di migration svarga-backend.
+// menyusul nanti begitu tabel pendukungnya ditambahkan di migration jejak-wangi-backend.
 const greenRoutes = [
   { image: route1, name: "Green Corridor Kemiren", distance: "4.2 km", minutes: "25 min", hijau: "92%", rating: 4.9 },
   { image: route2, name: "Marina Boom Corridor", distance: "6.8 km", minutes: "45 min", hijau: "85%", rating: 4.8 },
@@ -101,7 +101,7 @@ export default function HomePage() {
     <div className="min-h-dvh flex flex-col bg-sand-100">
       <div className="mx-auto w-full max-w-md px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-28">
         <header>
-          <h1 className="font-display font-bold text-xl text-canopy-700 tracking-wide">SVARGA</h1>
+          <h1 className="font-display font-bold text-xl text-canopy-700 tracking-wide">JEJAK WANGI</h1>
           <p className="text-[0.65rem] text-ink-500 tracking-wide uppercase mt-0.5">
             Digital Twin &amp; Wellness Corridor
           </p>
@@ -224,9 +224,9 @@ export default function HomePage() {
           })}
         </div>
 
-        <EcoCoach page="home" ispu={ispu} temperature={temperature} transport={journey.transport} className="mt-4" />
+        <EcoCoach page="home" ispu={ispu} temperature={temperature} transport={journey.transport} tanyaLink="/eco-coach" className="mt-4" />
 
-        <h2 className="font-display font-bold text-lg text-ink-900 mt-6 mb-3">Menu Svarga</h2>
+        <h2 className="font-display font-bold text-lg text-ink-900 mt-6 mb-3">Menu Jejak Wangi</h2>
         <div className="grid grid-cols-3 gap-2.5">
           {menuItems.map((m) => (
             <Link

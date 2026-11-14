@@ -1,7 +1,7 @@
-// SVARGA — konfigurasi layanan.
+// JEJAK WANGI — konfigurasi layanan.
 //
-// Seluruh data & autentikasi berasal dari backend Laravel (svarga-backend).
-// Alamat API diisi lewat VITE_LARAVEL_API_URL (mis. https://api.svarga.id/api).
+// Seluruh data & autentikasi berasal dari backend Laravel (jejak-wangi-backend).
+// Alamat API diisi lewat VITE_LARAVEL_API_URL (mis. https://api.jejakwangi.id/api).
 // Kalau kosong (mis. saat mengembangkan UI tanpa menjalankan backend), services/*
 // memakai data mock lokal — lihat pola try/catch di contentService.js dll.
 

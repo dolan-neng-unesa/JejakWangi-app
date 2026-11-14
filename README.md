@@ -1,9 +1,9 @@
-# SVARGA App (Frontend)
+# JEJAK WANGI App (Frontend)
 
-Progressive Web App untuk warga/pejalan kaki — bagian dari proyek **SVARGA: Digital
+Progressive Web App untuk warga/pejalan kaki — bagian dari proyek **JEJAKWANGI: Digital
 Twin & Wellness Corridor** (SMK Negeri 1 Banyuwangi, tim Happy Fun Angkasa).
 
-SVARGA mengubah koridor trotoar penghubung Taman Sritanjung–Taman Blambangan
+JEJAK WANGI mengubah koridor trotoar penghubung Taman Sritanjung–Taman Blambangan
 menjadi "Restorative Green-Wellness Corridor": data lingkungan real-time dari
 sensor IoT (ESP32) divisualisasikan lewat aplikasi ini, lengkap dengan navigasi
 rute hijau, terapi audio (soundscape), pencatat suasana hati, dan notifikasi
@@ -13,9 +13,9 @@ berbasis lokasi (geofencing).
 
 - React 19 + Vite + React Router
 - Tailwind CSS 4
-- Laravel API (lihat `../svarga-backend`) — satu-satunya backend: auth (Sanctum),
+- Laravel API (lihat `../jejak-wangi-backend`) — satu-satunya backend: auth (Sanctum),
   koridor/green space, UMKM, Festival (BWI-Fest), sensor, mood, geofencing,
-  soundscape. Database-nya hanya ada di backend (`svarga_be_db`).
+  soundscape. Database-nya hanya ada di backend (`jejak_wangi_be_db`).
 - Leaflet.js + React-Leaflet + OpenStreetMap — peta koridor & rute
 
 ## Menjalankan
@@ -32,8 +32,8 @@ npm run lint      # oxlint
 Salin `.env.example` menjadi `.env.local`:
 
 ```env
-# Alamat API Laravel (svarga-backend). Production: URL API publik, mis.
-# https://api.svarga.id/api — nilai ini tertanam saat `npm run build`.
+# Alamat API Laravel (jejak-wangi-backend). Production: URL API publik, mis.
+# https://api.jejakwangi.id/api — nilai ini tertanam saat `npm run build`.
 # Kosongkan hanya untuk mengembangkan UI tanpa backend (data mock lokal).
 VITE_LARAVEL_API_URL=http://localhost:8000/api
 ```
@@ -66,7 +66,7 @@ src/
 ## Uji coba: konsumsi sensor suhu & kualitas udara (BE Laravel)
 
 Sesuai arahan mentor (7 Sep 2026), FE mengonsumsi dua endpoint sensor dari
-`svarga-backend` lewat hook `src/hooks/useSensorReading.js`:
+`jejak-wangi-backend` lewat hook `src/hooks/useSensorReading.js`:
 
 - `GET /api/sensors/live` — data "langsung" dari sensor, dianggap valid kalau
   umurnya **< 5 menit**.
@@ -86,7 +86,7 @@ const temperature = useSensorReading("temperature", koridorId);
 // temperature.isStale    → true kalau sumbernya fallback DB
 ```
 
-Untuk mencoba alur ini end-to-end, jalankan `svarga-backend` (`php artisan
+Untuk mencoba alur ini end-to-end, jalankan `jejak-wangi-backend` (`php artisan
 serve`) lalu lihat README-nya untuk cara mengirim data sensor simulasi.
 
 ## Catatan implementasi lain
@@ -112,12 +112,12 @@ serve`) lalu lihat README-nya untuk cara mengirim data sensor simulasi.
   jatuh ke titik apa adanya dan ditandai "jalur perkiraan".
 - **Menggambar jalur koridor**: buka `/map?edit=1`, pilih koridor, lalu ketuk peta di
   sepanjang jalannya (awal → akhir). Tekan **Salin JSON** dan tempel ke
-  `svarga-backend/database/seeders/KoridorSeeder.php` (kolom `path`, format
+  `jejak-wangi-backend/database/seeders/KoridorSeeder.php` (kolom `path`, format
   `[[lat, lng], ...]`) dan `src/data/mockGreenSpaces.js`, lalu
   `php artisan migrate --seed` di backend.
 - **Sumber data**: Laravel → mock.
 - Galat `ERR_CONNECTION_REFUSED` ke `localhost:8000` di konsol berarti server Laravel
-  belum jalan (`php artisan serve` di `svarga-backend`). Itu log jaringan bawaan browser;
+  belum jalan (`php artisan serve` di `jejak-wangi-backend`). Itu log jaringan bawaan browser;
   app tetap jalan dengan data mock dan hanya memicunya sekali per muat halaman.
 
 ### API key tile peta
@@ -136,7 +136,7 @@ Daftar gratis di maptiler.com → Account → API keys. Jangan commit key ke rep
 
 | Langkah | Halaman | Catatan |
 |---|---|---|
-| Scan QR titik awal + "naik apa?" | `/scan`, `/q/:koridorId` | Kamera memakai `BarcodeDetector` (Chrome/Android); cadangan: kode manual. Isi QR: `https://…/q/3`, `svarga:koridor:3`, atau `3`. |
+| Scan QR titik awal + "naik apa?" | `/scan`, `/q/:koridorId` | Kamera memakai `BarcodeDetector` (Chrome/Android); cadangan: kode manual. Isi QR: `https://…/q/3`, `jejakwangi:koridor:3`, atau `3`. |
 | Beranda | `/home` | Kartu ISPU, Eco-Coach, menu. |
 | Detail koridor | `/koridor/:id` | Oksigen, contoh emisi (motor/mobil/AC toko), kalkulator CO₂, sensor IoT, UMKM. |
 | Smart Green Route | `/route` → `/route/detail/:id` | Cek ISPU dulu; titik hijau (rute), oranye (UMKM), biru (charger surya). |
@@ -155,5 +155,5 @@ dampak & poin, memberi kupon resmi, lalu app menarik `/vouchers` dan `/me/summar
 **Eco-Coach** (`lib/ecoCoach.js`) berbasis aturan (udara, suhu, jam, moda, progres misi) — bukan model bahasa.
 Bentuk input/outputnya sengaja sederhana agar bisa diganti layanan AI nanti.
 
-Asumsi hitung (ubah di `lib/journey.js` DAN `svarga-backend/config/jejakwangi.php`, harus sama):
+Asumsi hitung (ubah di `lib/journey.js` DAN `jejak-wangi-backend/config/jejakwangi.php`, harus sama):
 BBM Rp10.000/L, 70 kkal/km, 30 poin/km, faktor emisi dari `carbonBalance.js`.

@@ -124,7 +124,7 @@ export default function ScanPage({ mode = "awal" }) {
   function submitManual(e) {
     e.preventDefault();
     const id = parse(manual);
-    if (id == null) return setError(byo ? "QR tidak dikenali. Pindai QR dari kasir atau tempel kodenya." : "Kode tidak dikenali. Contoh: 1 atau svarga:koridor:1");
+    if (id == null) return setError(byo ? "QR tidak dikenali. Pindai QR dari kasir atau tempel kodenya." : "Kode tidak dikenali. Contoh: 1 atau jejakwangi:koridor:1");
     setError("");
     setKoridorId(id);
   }
@@ -162,7 +162,7 @@ export default function ScanPage({ mode = "awal" }) {
               value={manual}
               onChange={(e) => setManual(e.target.value)}
               inputMode="text"
-              placeholder={byo ? "svarga:byo:…" : "mis. 1"}
+              placeholder={byo ? "jejakwangi:byo:…" : "mis. 1"}
               className="flex-1 rounded-xl bg-white/10 border border-white/15 px-3.5 py-2.5 text-sm placeholder:text-sand-100/40 focus:outline-none focus:border-sand-50/60"
             />
             <button className="rounded-xl bg-sand-50 text-canopy-800 px-4 text-sm font-semibold">Lanjut</button>

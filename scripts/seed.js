@@ -1,4 +1,4 @@
-// SVARGA — Script seed data awal ke Firestore
+// JEJAK WANGI — Script seed data awal ke Firestore
 //
 // Menulis data contoh (mock) yang selama ini dipakai di src/data/*.js ke
 // Firestore project asli, supaya begitu USE_MOCK mati, halaman tidak kosong.

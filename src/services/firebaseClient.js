@@ -1,4 +1,4 @@
-// SVARGA — Konfigurasi Firebase
+// JEJAK WANGI — Konfigurasi Firebase
 // Isi env di .env.local dengan kredensial project Firebase asli sebelum deploy.
 // Selama kredensial belum diisi, services/* otomatis jatuh ke mock data (lihat config.js).
 //
