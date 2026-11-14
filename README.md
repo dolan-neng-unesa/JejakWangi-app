@@ -1,159 +1,279 @@
-# JEJAK WANGI App (Frontend)
+# JEJAK WANGI — Panduan Instalasi Lokal
 
-Progressive Web App untuk warga/pejalan kaki — bagian dari proyek **JEJAKWANGI: Digital
-Twin & Wellness Corridor** (SMK Negeri 1 Banyuwangi, tim Happy Fun Angkasa).
+Proyek terdiri dari **tiga bagian** yang dijalankan bersamaan di komputer lokal:
 
-JEJAK WANGI mengubah koridor trotoar penghubung Taman Sritanjung–Taman Blambangan
-menjadi "Restorative Green-Wellness Corridor": data lingkungan real-time dari
-sensor IoT (ESP32) divisualisasikan lewat aplikasi ini, lengkap dengan navigasi
-rute hijau, terapi audio (soundscape), pencatat suasana hati, dan notifikasi
-berbasis lokasi (geofencing).
+| Bagian | Folder | Teknologi | Alamat lokal |
+|---|---|---|---|
+| Backend (API) | `backend/` | Laravel 13 (PHP ≥ 8.3) + SQLite + Sanctum | http://localhost:8000 |
+| Frontend user (PWA warga) | `frontend-user/` | React 19 + Vite + Tailwind 4 | http://localhost:5173 |
+| Dashboard admin | `dashboard-admin/` | React 19 + Vite + Tailwind 4 | http://localhost:5174 |
 
-## Tech stack
+Opsional: perangkat **ESP32 + DHT11 + OLED** yang mengirim suhu & kelembapan ke backend (lihat bagian 5).
 
-- React 19 + Vite + React Router
-- Tailwind CSS 4
-- Laravel API (lihat `../jejak-wangi-backend`) — satu-satunya backend: auth (Sanctum),
-  koridor/green space, UMKM, Festival (BWI-Fest), sensor, mood, geofencing,
-  soundscape. Database-nya hanya ada di backend (`jejak_wangi_be_db`).
-- Leaflet.js + React-Leaflet + OpenStreetMap — peta koridor & rute
+> Urutan wajib: **backend dulu**, baru kedua frontend. Kedua frontend hanya mengambil data dari API backend.
 
-## Menjalankan
+---
+
+## 1. Prasyarat
+
+Pasang dulu di komputer:
+
+- **PHP 8.3 atau lebih baru**, dengan ekstensi: `sqlite3`, `pdo_sqlite`, `mbstring`, `openssl`, `curl`, `fileinfo`, `tokenizer`, `xml`, `ctype`, `bcmath`
+- **Composer** 2.x — https://getcomposer.org
+- **Node.js 20+** dan **npm** — https://nodejs.org
+- **Git** (opsional)
+
+Cek versi:
+
+```bash
+php -v
+composer -V
+node -v
+npm -v
+php -m | grep -i sqlite     # Windows PowerShell: php -m | findstr /i sqlite
+```
+
+> **Windows (Laragon/XAMPP):** pastikan `extension=pdo_sqlite` dan `extension=sqlite3` tidak diberi tanda `;` di `php.ini`.
+
+---
+
+## 2. Backend (Laravel)
+
+```bash
+cd backend
+```
+
+> Jika hasil ekstrak ZIP membuat folder bertingkat (mis. `backend/New folder`), masuklah ke folder yang berisi file `artisan` dan `composer.json`.
+
+### 2.1 Pasang dependensi
+
+```bash
+composer install
+```
+
+### 2.2 Siapkan `.env`
+
+```bash
+cp .env.example .env            # Windows CMD: copy .env.example .env
+php artisan key:generate
+```
+
+Pengaturan penting di `.env` (nilai bawaan sudah cocok untuk lokal):
+
+```env
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+# Domain frontend yang boleh memanggil API (pisahkan dengan koma)
+CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174
+
+DB_CONNECTION=sqlite
+
+# Akun admin untuk login dashboard (opsional; bawaan lokal: admin@jejakwangi.id / jejakwangi123)
+# ADMIN_SEED_EMAIL=admin@jejakwangi.id
+# ADMIN_SEED_PASSWORD=jejakwangi123
+
+# Sumber ISPU/suhu cadangan dari Open-Meteo (gratis, tanpa API key)
+#   off       = hanya sensor ESP32
+#   auto      = ESP32 diutamakan, Open-Meteo hanya cadangan (disarankan)
+#   openmeteo = selalu Open-Meteo, KECUALI jenis data yang sedang dikirim ESP32 aktif
+OPENMETEO_MODE=auto
+# true  = Open-Meteo boleh melengkapi data yang tidak diukur ESP32 (mis. PM2.5/PM10 untuk ISPU)
+# false = Open-Meteo tidak dipakai sama sekali selama ESP32 aktif
+OPENMETEO_LENGKAPI_SAAT_ESP=true
+
+# Eco-Coach (AI) — kosongkan LLM_PROVIDER bila tidak dipakai, sistem memakai template cadangan
+LLM_PROVIDER=
+```
+
+> Login Google/Facebook bersifat opsional. Kosongkan `GOOGLE_CLIENT_ID` / `FACEBOOK_APP_ID` jika tidak dipakai — tombolnya otomatis hilang di frontend.
+
+### 2.3 Siapkan database SQLite, migrasi, dan seeder
+
+```bash
+# buat file database kosong
+touch database/database.sqlite        # Windows PowerShell: New-Item database/database.sqlite -ItemType File
+
+php artisan migrate
+php artisan db:seed
+```
+
+`db:seed` mengisi data awal: koridor, UMKM, festival, geofence, perangkat/bacaan sensor contoh, akun admin, dan **data demo satu siklus penuh** (`DemoCycleSeeder`) sehingga semua halaman langsung terisi walau belum ada sensor sungguhan.
+
+> Jika muncul galat *database not found*, isi `DB_DATABASE` di `.env` dengan **path absolut** ke file tersebut, mis. `DB_DATABASE=C:/proyek/backend/database/database.sqlite`.
+
+### 2.4 Jalankan server
+
+```bash
+php artisan serve
+```
+
+Backend aktif di **http://localhost:8000**. Cek cepat: buka http://localhost:8000/api/koridors di browser — harus muncul JSON.
+
+### 2.5 (Opsional) Scheduler & uji satu siklus
+
+Beberapa proses berjalan terjadwal (database per jam, monitor sensor offline). Untuk lokal, jalankan di terminal terpisah:
+
+```bash
+php artisan schedule:work
+```
+
+Perintah berguna:
+
+```bash
+php artisan engine:hourly                 # tarik Open-Meteo + hitung database per jam (jam lalu)
+php artisan engine:hourly --dari=2026-11-10 --sampai=2026-11-14 --tanpa-api   # hitung ulang rentang
+php artisan jejakwangi:cycle-check        # cek satu siklus penuh (input → hitung → tampil)
+php artisan jejakwangi:cycle-check --seed # isi ulang data seder 48 jam lalu cek
+php artisan jejakwangi:monitor            # cek sensor offline & AQI tinggi
+php artisan devices:register ESP32-KOR1 --koridor=1   # daftarkan perangkat (alternatif lewat Admin)
+```
+
+### 2.6 Jalankan tes backend
+
+```bash
+php artisan test
+# atau hanya satu berkas:
+php artisan test --filter=OpenMeteoAirTest
+```
+
+---
+
+## 3. Dashboard Admin
+
+Buka terminal **baru**:
+
+```bash
+cd dashboard-admin       # masuk ke folder yang berisi package.json
+cp .env.example .env     # isi: VITE_API_URL=http://localhost:8000/api
+npm install
+npm run dev
+```
+
+Buka **http://localhost:5174**, lalu login:
+
+- Email: `admin@jejakwangi.id`
+- Kata sandi: `jejakwangi123` (atau nilai `ADMIN_SEED_PASSWORD` jika Anda mengaturnya)
+
+Hanya akun dengan `is_admin = true` yang bisa masuk.
+
+**Tanpa backend (hanya lihat tampilan):**
+
+```bash
+npm run mock      # terminal 1 — mock API
+npm run dev       # terminal 2
+```
+
+> Folder `dashboard-admin` pada ZIP juga membawa salinan sebagian kode Laravel (`app/`, `routes/`, dll). **Abaikan** — backend yang dipakai adalah folder `backend/`.
+
+Tes: `npm test`
+
+---
+
+## 4. Frontend User (PWA warga)
+
+Buka terminal **baru**:
+
+```bash
+cd frontend-user         # masuk ke folder yang berisi package.json
+cp .env.example .env.local
+```
+
+Isi `.env.local`:
+
+```env
+# Wajib agar memakai data dari backend (kosong = data mock lokal)
+VITE_LARAVEL_API_URL=http://localhost:8000/api
+
+# Opsional — peta, routing, dan Firebase; biarkan kosong jika tidak punya
+# VITE_MAPTILER_API_KEY=
+# VITE_ROUTING_URL=
+```
+
+Jalankan:
 
 ```bash
 npm install
-npm run dev       # http://localhost:5173
-npm run build     # build produksi ke dist/
-npm run lint      # oxlint
+npm run dev
 ```
 
-## Konfigurasi environment (`.env.local`)
+Buka **http://localhost:5173**.
 
-Salin `.env.example` menjadi `.env.local`:
+Perintah lain: `npm run build` (build produksi ke `dist/`), `npm run lint`, `npm test`.
 
-```env
-# Alamat API Laravel (jejak-wangi-backend). Production: URL API publik, mis.
-# https://api.jejakwangi.id/api — nilai ini tertanam saat `npm run build`.
-# Kosongkan hanya untuk mengembangkan UI tanpa backend (data mock lokal).
-VITE_LARAVEL_API_URL=http://localhost:8000/api
+> Mengakses dari HP di jaringan yang sama: Vite sudah memakai `host: true`. Buka `http://IP-LAPTOP:5173`, ganti `VITE_LARAVEL_API_URL` menjadi `http://IP-LAPTOP:8000/api`, dan jalankan backend dengan `php artisan serve --host=0.0.0.0`.
+
+---
+
+## 5. Menghubungkan ESP32 (opsional)
+
+1. Login Admin → **Sensor IoT → Tambah Sensor**. Pilih **koridor** tempat perangkat dipasang. Salin **kunci perangkat** (`svg_...`) — hanya tampil **sekali**.
+2. Buka sketch Arduino, isi bagian konfigurasi:
+
+   ```cpp
+   const char* WIFI_SSID  = "NAMA_WIFI";
+   const char* WIFI_PASS  = "PASSWORD_WIFI";
+   const char* SERVER_URL = "http://192.168.1.10:8000";   // IP laptop, BUKAN localhost
+   const char* DEVICE_KEY = "svg_...";                    // kunci dari langkah 1
+   ```
+
+3. Cari IP laptop: `ipconfig` (Windows) atau `ip a` / `ifconfig` (Linux/Mac). Laptop dan ESP32 harus di **WiFi yang sama**.
+4. Jalankan backend agar bisa diakses dari jaringan:
+
+   ```bash
+   php artisan serve --host=0.0.0.0 --port=8000
+   ```
+
+   Izinkan port 8000 di firewall Windows jika ESP32 gagal terhubung.
+5. Pasang library lewat Library Manager: **Adafruit GFX**, **Adafruit SSD1306**, **DHT sensor library**, **Adafruit Unified Sensor**. Upload ke board **ESP32 Dev Module**.
+6. Wiring: OLED `SDA→GPIO21`, `SCL→GPIO22` · DHT11 `DATA→GPIO4`.
+
+Indikator di OLED pojok kanan bawah: `W` = WiFi tersambung, `S:OK` = server menerima data, `S:ERR` = gagal.
+
+**Perilaku sumber data:** selama ESP32 mengirim data (bacaan < 5 menit), suhu & kelembapan **selalu dari ESP32**, bukan Open-Meteo. Open-Meteo hanya dipakai bila tidak ada ESP32 aktif.
+
+Kode HTTP di Serial Monitor (115200 baud):
+
+| Kode | Arti |
+|---|---|
+| `201` | Berhasil |
+| `401` | Kunci salah / perangkat dinonaktifkan |
+| `422` | Format data tidak valid |
+| `429` | Terlalu sering mengirim (maks 20×/menit) — perbesar `KIRIM_MS` |
+| `-1` | Tidak bisa terhubung — periksa IP, WiFi, firewall |
+
+---
+
+## 6. Ringkasan: menjalankan semuanya
+
+Tiga terminal (plus satu opsional):
+
+```bash
+# Terminal 1 — backend
+cd backend && php artisan serve
+
+# Terminal 2 — dashboard admin
+cd dashboard-admin && npm run dev      # http://localhost:5174
+
+# Terminal 3 — frontend user
+cd frontend-user && npm run dev        # http://localhost:5173
+
+# Terminal 4 (opsional) — scheduler
+cd backend && php artisan schedule:work
 ```
 
-Setiap `services/*.js` memilih sumber data berjenjang, jadi halaman tidak pernah
-blank walau backend belum aktif:
+## 7. Pemecahan masalah
 
-1. **Laravel API** (kalau `VITE_LARAVEL_API_URL` diisi dan servernya menyala).
-2. **Data mock lokal** (`src/data/*.js`) — fallback bila Laravel tidak
-   dikonfigurasi atau tidak terjangkau.
-
-Login memakai email/kata sandi lewat Laravel Sanctum. Tanpa
-`VITE_LARAVEL_API_URL`, login memakai sesi mock di `localStorage`.
-
-## Struktur folder
-
-```
-src/
-├── pages/        Satu file per halaman (Home, Koridor, Map, SmartGreenRoute,
-│                 RouteDetail, Navigation, MoodTracker, MoodHistory,
-│                 SoundscapeTherapy, Geofencing, BwiFest, Umkm, dst.)
-├── components/   Komponen UI (global/, layout/, geofencing/)
-├── services/     Satu file per domain data; menjembatani halaman ke
-│                 Laravel API / mock (lihat urutan fallback di atas)
-├── hooks/        useGeofence, useSensorReading
-├── context/      GeofenceContext (state zona aktif lintas halaman)
-└── data/         Data mock (dipakai selama backend belum tersedia)
-```
-
-## Uji coba: konsumsi sensor suhu & kualitas udara (BE Laravel)
-
-Sesuai arahan mentor (7 Sep 2026), FE mengonsumsi dua endpoint sensor dari
-`jejak-wangi-backend` lewat hook `src/hooks/useSensorReading.js`:
-
-- `GET /api/sensors/live` — data "langsung" dari sensor, dianggap valid kalau
-  umurnya **< 5 menit**.
-- `GET /api/sensors/latest` — fallback: baris terakhir yang tersimpan di DB,
-  berapa pun umurnya.
-
-**Kondisi yang diterapkan di hook:** FE polling `/live` setiap 30 detik. Kalau
-sudah **5 menit** berlalu sejak FE terakhir berhasil mendapat data segar dari
-`/live` (mis. karena ESP32 mati atau jaringan putus), hook otomatis memanggil
-`/latest` sebagai fallback dan menandai data itu sebagai "data lama"
-(`isStale: true`) di UI — lihat kartu **Suhu** dan **Udara** di halaman Home.
-
-```js
-const temperature = useSensorReading("temperature", koridorId);
-// temperature.data       → { value, unit, recorded_at, ... }
-// temperature.source     → "live" | "db" | null (null = Laravel belum dikonfigurasi)
-// temperature.isStale    → true kalau sumbernya fallback DB
-```
-
-Untuk mencoba alur ini end-to-end, jalankan `jejak-wangi-backend` (`php artisan
-serve`) lalu lihat README-nya untuk cara mengirim data sensor simulasi.
-
-## Catatan implementasi lain
-
-- Mode tamu didukung penuh: seluruh fitur inti (dashboard lingkungan,
-  Soundscape Therapy, Smart Green Route) bisa diakses tanpa login; login hanya
-  diperlukan untuk menyimpan riwayat Mood Tracker lintas perangkat
-  (`src/services/authService.js`, mode mock disimpan di `localStorage`).
-- Geofencing memakai Geolocation API + rumus Haversine di sisi client
-  (`src/hooks/useGeofence.js`), hanya aktif selama halaman PWA berada di
-  foreground — lihat batasan yang sama di proposal proyek.
-
-## Peta & jalur koridor
-
-- **Tile peta**: semua halaman memakai `components/map/BaseTileLayer.jsx`. Urutan
-  penyedia ada di `src/lib/mapTiles.js` (CARTO → OpenStreetMap; atau penyedia sendiri
-  lewat `VITE_MAP_TILE_URL`). Kalau tile gagal dimuat, otomatis pindah ke penyedia
-  berikutnya; ukuran peta juga disegarkan otomatis saat kontainer berubah.
-- **Jalur mengikuti jalan**: titik-titik jalur (`path` di data koridor, atau titik
-  singgah di `lib/demoRoute.js`) dicocokkan ke jalan nyata OSM oleh `lib/roadSnap.js`
-  (layanan routing pejalan kaki `routing.openstreetmap.de`, atau `VITE_ROUTING_URL`
-  sendiri). Hasilnya di-cache di `localStorage`; kalau layanan tidak terjangkau, garis
-  jatuh ke titik apa adanya dan ditandai "jalur perkiraan".
-- **Menggambar jalur koridor**: buka `/map?edit=1`, pilih koridor, lalu ketuk peta di
-  sepanjang jalannya (awal → akhir). Tekan **Salin JSON** dan tempel ke
-  `jejak-wangi-backend/database/seeders/KoridorSeeder.php` (kolom `path`, format
-  `[[lat, lng], ...]`) dan `src/data/mockGreenSpaces.js`, lalu
-  `php artisan migrate --seed` di backend.
-- **Sumber data**: Laravel → mock.
-- Galat `ERR_CONNECTION_REFUSED` ke `localhost:8000` di konsol berarti server Laravel
-  belum jalan (`php artisan serve` di `jejak-wangi-backend`). Itu log jaringan bawaan browser;
-  app tetap jalan dengan data mock dan hanya memicunya sekali per muat halaman.
-
-### API key tile peta
-
-Leaflet tidak memerlukan API key; yang meminta key adalah penyedia tile. Kalau tile
-menampilkan tulisan "API key required", isi di `.env.local` (lalu restart `npm run dev`):
-
-```
-VITE_MAPTILER_API_KEY=isi_key_dari_maptiler_cloud
-```
-
-Daftar gratis di maptiler.com → Account → API keys. Jangan commit key ke repo publik
-(batasi domain key di dashboard MapTiler). Tanpa key, peta memakai OpenStreetMap standar.
-
-## Alur Jejak Wangi (sesuai dokumen ALUR JEJAK WANGI & Alur Sistem)
-
-| Langkah | Halaman | Catatan |
-|---|---|---|
-| Scan QR titik awal + "naik apa?" | `/scan`, `/q/:koridorId` | Kamera memakai `BarcodeDetector` (Chrome/Android); cadangan: kode manual. Isi QR: `https://…/q/3`, `jejakwangi:koridor:3`, atau `3`. |
-| Beranda | `/home` | Kartu ISPU, Eco-Coach, menu. |
-| Detail koridor | `/koridor/:id` | Oksigen, contoh emisi (motor/mobil/AC toko), kalkulator CO₂, sensor IoT, UMKM. |
-| Smart Green Route | `/route` → `/route/detail/:id` | Cek ISPU dulu; titik hijau (rute), oranye (UMKM), biru (charger surya). |
-| Rekam perjalanan | `/aktivitas` | GPS ala Strava + suara ambient; mode simulasi bila GPS tidak ada. |
-| Scan QR titik akhir | `/scan/akhir/:id` | Verifikasi; boleh dilewati. |
-| Hasil (emisi terhindar & rupiah) | `/aktivitas/selesai/:id` | Peta jejak, peringkat leaderboard, Eco-Coach. |
-| Kupon bertingkat, leaderboard bulanan | `/misi`, `/kupon` | 3 kupon (1/3/5 km) diklaim manual, cooldown 30 hari per kupon. Leaderboard Top 100 jarak terjauh bulan ini; Top 1/3/5/10 mendapat badge di profil. Progres & leaderboard reset otomatis tiap awal bulan (WIB). |
-| Zero-waste: bawa tempat sendiri | `/kasir` (kasir), `/scan/tempat-sendiri` (pelanggan) | Kasir menekan "Customer membawa tempat sendiri" → QR sekali pakai (5 menit). Pelanggan memindai → cooldown tiap kupon yang sedang cooldown berkurang 1 hari. Butuh login + server. |
-| Mood (feedback akhir) | `/mood` | |
-| Charger station surya | `/charger`, `/charger/:id`, `/charger/:id/isi`, `/info` | Progres pengisian masih **simulasi** (belum dibaca dari sensor stasiun). |
-
-**Local-first:** semua data perjalanan disimpan di perangkat (`services/journeyStore.js`). Bila pengguna login dan
-backend terjangkau, `services/journeySync.js` mengirim aktivitas ke `POST /activities`; **server menghitung ulang**
-dampak & poin, memberi kupon resmi, lalu app menarik `/vouchers` dan `/me/summary` sebagai sumber kebenaran.
-
-**Eco-Coach** (`lib/ecoCoach.js`) berbasis aturan (udara, suhu, jam, moda, progres misi) — bukan model bahasa.
-Bentuk input/outputnya sengaja sederhana agar bisa diganti layanan AI nanti.
-
-Asumsi hitung (ubah di `lib/journey.js` DAN `jejak-wangi-backend/config/jejakwangi.php`, harus sama):
-BBM Rp10.000/L, 70 kkal/km, 30 poin/km, faktor emisi dari `carbonBalance.js`.
+| Masalah | Solusi |
+|---|---|
+| `could not find driver` | Aktifkan `pdo_sqlite` & `sqlite3` di `php.ini`, lalu `php -m` untuk memastikan |
+| `Database file ... does not exist` | Buat `database/database.sqlite`, atau isi `DB_DATABASE` dengan path absolut |
+| `No application encryption key` | Jalankan `php artisan key:generate` |
+| Frontend: *CORS error* / *Network Error* | Pastikan backend jalan & `CORS_ALLOWED_ORIGINS` memuat port frontend, lalu `php artisan config:clear` |
+| Frontend user tampil data mock | `VITE_LARAVEL_API_URL` kosong — isi, lalu **restart** `npm run dev` |
+| Login admin ditolak | Jalankan `php artisan db:seed`; pastikan akun `is_admin = true` |
+| Data kosong di dashboard | Jalankan `php artisan db:seed` atau `php artisan jejakwangi:cycle-check --seed` |
+| Data cuaca/ISPU tidak muncul | Butuh internet untuk Open-Meteo; atau set `OPENMETEO_MODE=off` |
+| Setelah ubah `.env` tidak berpengaruh | `php artisan config:clear` (backend) atau restart `npm run dev` (frontend) |
+| Reset total database | `php artisan migrate:fresh --seed` (**menghapus semua data**) |
