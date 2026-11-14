@@ -351,11 +351,24 @@ export default function KoridorDetailPage() {
 
         {koridor && (
           <>
-            <SmartImage
-              src={koridor.hero_image}
-              alt={koridor.formal_name}
-              className="w-full h-40 object-cover rounded-2xl mt-4"
-            />
+            {koridor.hero_video ? (
+              <video
+                src={koridor.hero_video}
+                poster={koridor.hero_image || undefined}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                className="w-full h-40 object-cover rounded-2xl mt-4"
+              />
+            ) : (
+              <SmartImage
+                src={koridor.hero_image}
+                alt={koridor.formal_name}
+                className="w-full h-40 object-cover rounded-2xl mt-4"
+              />
+            )}
 
             {koridor.highlights?.kunjungan?.length > 0 && <VisitHighlights items={koridor.highlights.kunjungan} />}
             {koridor.highlights?.eco_coach && <EcoCoach message={koridor.highlights.eco_coach} className="mt-4" />}
@@ -379,7 +392,7 @@ export default function KoridorDetailPage() {
               </p>
             </Panel>
 
-            {!koridor.highlights?.eco_coach && <EcoCoach page="koridor" className="mt-4" />}
+            {!koridor.highlights?.eco_coach && <EcoCoach page="koridor" tanyaLink={`/eco-coach?koridor=${koridor.id}`} className="mt-4" />}
             <CarbonCalculator km={km} setKm={setKm} perWeek={perWeek} setPerWeek={setPerWeek} />
 
             <p className="text-xs font-medium text-ink-500 tracking-wide uppercase mt-6 mb-2.5">
